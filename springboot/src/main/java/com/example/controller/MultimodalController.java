@@ -91,13 +91,14 @@ public class MultimodalController {
         if (request.getCode().length() > 20000) {
             return Result.error("400", "代码内容不能超过20000个字符");
         }
+        String language = normalizeLanguage(request.getLanguage());
         MultimodalRecord record = recordService.createCodeRecord(
                 currentUser, request.getSessionId(), request.getLanguage(), request.getCode());
         Map<String, Object> payload = Map.of(
                 "recordId", record.getId(),
                 "modality", "CODE",
                 "status", "RESERVED",
-                "language", request.getLanguage() == null ? "unknown" : request.getLanguage(),
+                "language", language,
                 "compileOutput", "",
                 "runOutput", "",
                 "suggestion", "代码运行沙箱接口已预留。当前版本只保存和评估代码文本，不在服务端执行不受信任代码。"
@@ -120,5 +121,9 @@ public class MultimodalController {
             throw new com.example.exception.CustomException("403", "只有求职者可以使用多模态面试能力");
         }
         return currentUser;
+    }
+
+    private String normalizeLanguage(String language) {
+        return language == null || language.trim().isEmpty() ? "unknown" : language.trim();
     }
 }
