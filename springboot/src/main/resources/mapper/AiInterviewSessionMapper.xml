@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.AiInterviewSessionMapper">
+
+    <insert id="insert" parameterType="com.example.entity.AiInterviewSession">
+        insert into interview_session
+        (id, user_id, job_position, interview_type, difficulty, duration_minutes,
+         interaction_mode, status, current_question_no, version)
+        values
+        (#{id}, #{userId}, #{jobPosition}, #{interviewType}, #{difficulty}, #{durationMinutes},
+         #{interactionMode}, #{status}, #{currentQuestionNo}, #{version})
+    </insert>
+
+    <select id="selectById" resultType="com.example.entity.AiInterviewSession">
+        select id, user_id, job_position, interview_type, difficulty, duration_minutes,
+               interaction_mode, status, current_question_no, version, started_at,
+               finished_at, created_at, updated_at
+        from interview_session
+        where id = #{id}
+    </select>
+
+    <select id="selectByUserId" resultType="com.example.entity.AiInterviewSession">
+        select id, user_id, job_position, interview_type, difficulty, duration_minutes,
+               interaction_mode, status, current_question_no, version, started_at,
+               finished_at, created_at, updated_at
+        from interview_session
+        where user_id = #{userId}
+        <if test="status != null and status != ''">
+            and status = #{status}
+        </if>
+        order by created_at desc
+    </select>
+
+    <update id="updateToRunning">
+        update interview_session
+        set status = 'RUNNING',
+            started_at = coalesce(started_at, current_timestamp),
+            version = version + 1
+        where id = #{id}
+          and status = 'CREATED'
+          and version = #{version}
+    </update>
+
+    <update id="updateQuestionNo">
+        update interview_session
+        set current_question_no = #{questionNo},
+            version = version + 1
+        where id = #{id}
+          and status = 'RUNNING'
+    </update>
+
+    <update id="updateToFinished">
+        update interview_session
+        set status = 'FINISHED',
+            finished_at = current_timestamp,
+            version = version + 1
+        where id = #{id}
+          and status = 'RUNNING'
+    </update>
+
+    <update id="updateToCancelled">
+        update interview_session
+        set status = 'CANCELLED',
+            finished_at = coalesce(finished_at, current_timestamp),
+            version = version + 1
+        where id = #{id}
+          and status in ('CREATED', 'RUNNING')
+          and version = #{version}
+    </update>
+</mapper>

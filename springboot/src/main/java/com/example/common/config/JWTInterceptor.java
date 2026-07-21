@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.util.StringUtils;
 
 /**
  * JWT拦截器
@@ -36,19 +37,23 @@ public class JWTInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 1. 从http请求标头里面拿到token
         String token = request.getHeader(Constants.TOKEN);
-        if (ObjectUtil.isNull(token)) {
+        if (!StringUtils.hasText(token)) {
             // 如果没拿到，那么再从请求参数里拿一次
-            request.getParameter(Constants.TOKEN);
+            token = request.getParameter(Constants.TOKEN);
         }
         // 2. 开始执行认证
-        if (ObjectUtil.isNull(token)) {
+        if (!StringUtils.hasText(token)) {
             throw new CustomException(ResultCodeEnum.TOKEN_INVALID_ERROR);
         }
         Account account = null;
         try {
-            String audience = JWT.decode(token).getAudience().get(0);
-            String userId = audience.split("-")[0];
-            String role = audience.split("-")[1];
+            String audience = JWT.decode(token).getAudience().stream().findFirst().orElseThrow();
+            String[] audienceParts = audience.split("-", 2);
+            if (audienceParts.length != 2) {
+                throw new IllegalArgumentException("invalid token audience");
+            }
+            String userId = audienceParts[0];
+            String role = audienceParts[1];
             // 根据用户角色判断用户属于哪个数据库表 然后查询用户数据
             if (RoleEnum.ADMIN.name().equals(role)) {
                 account = adminService.selectById(Integer.valueOf(userId));
@@ -58,6 +63,9 @@ public class JWTInterceptor implements HandlerInterceptor {
             }
             if (RoleEnum.USER.name().equals(role)) {
                 account = userService.selectById(Integer.valueOf(userId));
+            }
+            if (account == null) {
+                throw new IllegalArgumentException("unknown role or user");
             }
         } catch (Exception e) {
             throw new CustomException(ResultCodeEnum.TOKEN_CHECK_ERROR);

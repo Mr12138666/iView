@@ -13,7 +13,6 @@
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",
     "axios": "^1.7.2",
-    "crypto-js": "^4.2.0",
     "echarts": "^5.5.1",
     "element-plus": "^2.8.4",
     "face-api.js": "^0.22.2",

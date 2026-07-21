@@ -13,7 +13,7 @@ public class SparkApiConfig {
     private String hostUrl;
     private String apiPassword; // 新增
     private String modelName;   // 新增
-    // private String domain; // 旧的，可以移除或注释
+    private String ttsWsUrl;
 
     // Standard Getters and Setters
     public String getAppid() { return appid; }
@@ -32,6 +32,6 @@ public class SparkApiConfig {
     public String getModelName() { return modelName; } // 新增
     public void setModelName(String modelName) { this.modelName = modelName; } // 新增
 
-    // public String getDomain() { return domain; }
-    // public void setDomain(String domain) { this.domain = domain; }
+    public String getTtsWsUrl() { return ttsWsUrl; }
+    public void setTtsWsUrl(String ttsWsUrl) { this.ttsWsUrl = ttsWsUrl; }
 }

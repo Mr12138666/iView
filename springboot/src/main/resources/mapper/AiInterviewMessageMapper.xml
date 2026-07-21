@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.AiInterviewMessageMapper">
+
+    <insert id="insert" parameterType="com.example.entity.AiInterviewMessage" useGeneratedKeys="true" keyProperty="id">
+        insert into interview_message
+        (session_id, message_order, role, content, modality, question_id)
+        values
+        (#{sessionId}, #{messageOrder}, #{role}, #{content}, #{modality}, #{questionId})
+    </insert>
+
+    <select id="selectBySessionId" resultType="com.example.entity.AiInterviewMessage">
+        select id, session_id, message_order, role, content, modality, question_id, created_at
+        from interview_message
+        where session_id = #{sessionId}
+        order by message_order asc
+    </select>
+
+    <select id="selectMaxOrder" resultType="java.lang.Integer">
+        select coalesce(max(message_order), -1)
+        from interview_message
+        where session_id = #{sessionId}
+    </select>
+</mapper>

@@ -3,28 +3,28 @@
 <!--    <div class="card" style="margin-bottom: 5px">您好！{{ data.user?.name }}，欢迎使用本系统！</div>-->
     <div style="display: flex">
       <div style="flex: 1; display: flex; align-items: center" class="card">
-        <img src="@/assets/imgs/employ.jpg" alt="" style="width: 80px; height: 80px">
+        <el-icon :size="80" color="#409EFF"><OfficeBuilding /></el-icon>
         <div style="margin-left: 20px">
           <div style="font-size: 20px">平台在招企业数量</div>
           <div style="font-size: 20px; margin-top: 10px">{{ data.employNum }}</div>
         </div>
       </div>
       <div style="flex: 1; margin: 0 10px; display: flex; align-items: center" class="card">
-        <img src="@/assets/imgs/employee.jpg" alt="" style="width: 80px; height: 80px">
+        <el-icon :size="80" color="#67C23A"><UserFilled /></el-icon>
         <div style="margin-left: 20px">
           <div style="font-size: 20px">平台求职用户数量</div>
           <div style="font-size: 20px; margin-top: 10px">{{ data.employeeNum }}</div>
         </div>
       </div>
       <div style="flex: 1; display: flex; align-items: center" class="card">
-        <img src="@/assets/imgs/positon.jpg" alt="" style="width: 80px; height: 80px">
+        <el-icon :size="80" color="#E6A23C"><Briefcase /></el-icon>
         <div style="margin-left: 20px">
           <div style="font-size: 20px">平台在招岗位数量</div>
           <div style="font-size: 20px; margin-top: 10px">{{ data.positionNum }}</div>
         </div>
       </div>
       <div style="flex: 1; margin-left: 10px; display: flex; align-items: center" class="card">
-        <img src="@/assets/imgs/submit.jpg" alt="" style="width: 80px; height: 80px">
+        <el-icon :size="80" color="#F56C6C"><UploadFilled /></el-icon>
         <div style="margin-left: 20px">
           <div style="font-size: 20px">平台岗位总投递数量</div>
           <div style="font-size: 20px; margin-top: 10px">{{ data.submitNum }}</div>

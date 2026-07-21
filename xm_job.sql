@@ -76,6 +76,145 @@ CREATE TABLE `ai_interview_session`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'AI模拟面试会话表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Table structure for interview_session
+-- ----------------------------
+DROP TABLE IF EXISTS `interview_session`;
+CREATE TABLE `interview_session`  (
+  `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` int(0) NOT NULL,
+  `job_position` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `interview_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `difficulty` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `duration_minutes` int(0) NOT NULL,
+  `interaction_mode` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'TEXT',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'CREATED',
+  `current_question_no` int(0) NOT NULL DEFAULT 0,
+  `version` int(0) NOT NULL DEFAULT 0,
+  `started_at` datetime(0) NULL DEFAULT NULL,
+  `finished_at` datetime(0) NULL DEFAULT NULL,
+  `created_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_interview_session_user`(`user_id`, `created_at`) USING BTREE,
+  INDEX `idx_interview_session_status`(`status`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '企业级AI面试会话表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for interview_message
+-- ----------------------------
+DROP TABLE IF EXISTS `interview_message`;
+CREATE TABLE `interview_message`  (
+  `id` bigint(0) NOT NULL AUTO_INCREMENT,
+  `session_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `message_order` int(0) NOT NULL,
+  `role` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `modality` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'TEXT',
+  `question_id` int(0) NULL DEFAULT NULL,
+  `created_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_interview_message_order`(`session_id`, `message_order`) USING BTREE,
+  INDEX `idx_interview_message_session`(`session_id`, `created_at`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '企业级AI面试消息表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for interview_report
+-- ----------------------------
+DROP TABLE IF EXISTS `interview_report`;
+CREATE TABLE `interview_report`  (
+  `id` bigint(0) NOT NULL AUTO_INCREMENT,
+  `session_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `total_score` decimal(5, 2) NOT NULL DEFAULT 0,
+  `dimension_scores` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `strengths` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `weaknesses` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `suggestions` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `next_training` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `raw_content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'READY',
+  `created_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_interview_report_session`(`session_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '企业级AI面试报告表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for question_bank
+-- ----------------------------
+DROP TABLE IF EXISTS `question_bank`;
+CREATE TABLE `question_bank`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `title` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+  `interview_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `job_direction` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `difficulty` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_question_bank_type`(`interview_type`, `difficulty`) USING BTREE,
+  INDEX `idx_question_bank_enabled`(`enabled`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'AI面试题库表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for interview_question
+-- ----------------------------
+DROP TABLE IF EXISTS `interview_question`;
+CREATE TABLE `interview_question`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `title` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `interview_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `difficulty` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `reference_answer` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+  `follow_up_points` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+  `scoring_dimensions` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_interview_question_type`(`interview_type`, `difficulty`) USING BTREE,
+  INDEX `idx_interview_question_enabled`(`enabled`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'AI面试题目表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for question_bank_question
+-- ----------------------------
+DROP TABLE IF EXISTS `question_bank_question`;
+CREATE TABLE `question_bank_question`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `question_bank_id` int(0) NOT NULL,
+  `question_id` int(0) NOT NULL,
+  `sort_order` int(0) NOT NULL DEFAULT 0,
+  `created_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_question_bank_question`(`question_bank_id`, `question_id`) USING BTREE,
+  INDEX `idx_qbq_bank_order`(`question_bank_id`, `sort_order`) USING BTREE,
+  INDEX `idx_qbq_question`(`question_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'AI面试题库题目关联表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for scoring_rule
+-- ----------------------------
+DROP TABLE IF EXISTS `scoring_rule`;
+CREATE TABLE `scoring_rule`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `interview_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `dimension` varchar(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `criteria` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+  `weight` decimal(5, 2) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_scoring_rule_type`(`interview_type`) USING BTREE,
+  INDEX `idx_scoring_rule_enabled`(`enabled`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'AI面试评分规则表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
 -- Table structure for collect
 -- ----------------------------
 DROP TABLE IF EXISTS `collect`;

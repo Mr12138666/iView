@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.QuestionBankMapper">
+
+    <select id="selectAll" resultType="com.example.entity.QuestionBank">
+        select * from question_bank
+        <where>
+            <if test="title != null and title != ''">and title like concat('%', #{title}, '%')</if>
+            <if test="interviewType != null and interviewType != ''">and interview_type = #{interviewType}</if>
+            <if test="jobDirection != null and jobDirection != ''">and job_direction like concat('%', #{jobDirection}, '%')</if>
+            <if test="difficulty != null and difficulty != ''">and difficulty = #{difficulty}</if>
+            <if test="enabled != null">and enabled = #{enabled}</if>
+        </where>
+        order by updated_at desc
+    </select>
+
+    <insert id="insert" parameterType="com.example.entity.QuestionBank" useGeneratedKeys="true" keyProperty="id">
+        insert into question_bank
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null">title,</if>
+            <if test="description != null">description,</if>
+            <if test="interviewType != null">interview_type,</if>
+            <if test="jobDirection != null">job_direction,</if>
+            <if test="difficulty != null">difficulty,</if>
+            <if test="tags != null">tags,</if>
+            <if test="enabled != null">enabled,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="title != null">#{title},</if>
+            <if test="description != null">#{description},</if>
+            <if test="interviewType != null">#{interviewType},</if>
+            <if test="jobDirection != null">#{jobDirection},</if>
+            <if test="difficulty != null">#{difficulty},</if>
+            <if test="tags != null">#{tags},</if>
+            <if test="enabled != null">#{enabled},</if>
+        </trim>
+    </insert>
+
+    <update id="updateById" parameterType="com.example.entity.QuestionBank">
+        update question_bank
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="interviewType != null">interview_type = #{interviewType},</if>
+            <if test="jobDirection != null">job_direction = #{jobDirection},</if>
+            <if test="difficulty != null">difficulty = #{difficulty},</if>
+            <if test="tags != null">tags = #{tags},</if>
+            <if test="enabled != null">enabled = #{enabled},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from question_bank where id = #{id}
+    </delete>
+</mapper>

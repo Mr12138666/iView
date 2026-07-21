@@ -27,22 +27,32 @@ request.interceptors.response.use(
         if (response.config.responseType === 'blob') {
             return res
         }
-        // 当权限验证不通过的时候给出提示
-        if (res.code === '401') {
-            ElMessage.error(res.msg)
-            router.push('/login')
-        }
         // 兼容服务端返回的字符串数据
         if (typeof res === 'string') {
-            res = res ? JSON.parse(res) : res
+            try {
+                res = res ? JSON.parse(res) : res
+            } catch (parseError) {
+                console.error('响应数据解析失败', parseError)
+            }
+        }
+        // 当权限验证不通过的时候给出提示
+        if (res?.code === '401') {
+            ElMessage.error(res.msg)
+            router.push('/login')
         }
         return res;
     },
     error => {
-        if (error.response.status === 404) {
+        const status = error.response?.status
+        if (status === 401) {
+            ElMessage.error('登录状态已失效，请重新登录')
+            router.push('/login')
+        } else if (status === 404) {
             ElMessage.error('未找到请求接口')
-        } else if (error.response.status === 500) {
+        } else if (status === 500) {
             ElMessage.error('系统异常，请查看后端控制台报错')
+        } else if (!error.response) {
+            console.error('请求未能连接到服务端', error.message)
         } else {
             console.error(error.message)
         }

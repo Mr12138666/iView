@@ -11,6 +11,7 @@
           <el-menu-item v-if="data.user && data.user.role === 'USER'" index="/front/collect">我的收藏</el-menu-item>
           <el-menu-item v-if="data.user && data.user.role === 'USER'" index="/front/resume">我的简历</el-menu-item>
           <el-menu-item v-if="data.user && data.user.role === 'USER'" index="/front/submit">我的投递</el-menu-item>
+          <el-menu-item v-if="data.user && data.user.role === 'USER'" index="/front/interviewHistory">面试记录</el-menu-item>
           <el-menu-item v-if="data.user && data.user.role === 'USER'" index="/front/person">个人中心</el-menu-item>
         </el-menu>
       </div>

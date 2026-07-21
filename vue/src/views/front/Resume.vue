@@ -7,7 +7,9 @@
     <div style="width: 70%; margin: 50px auto; text-align: center">
       <el-row :gutter="10">
        <el-col :span="6" v-for="item in data.resumeData">
-         <img @click="navTo('/front/resumeEdit?id=' + item.id)" src="@/assets/imgs/img.png" alt="" style="width: 100%; cursor: pointer">
+         <div @click="navTo('/front/resumeEdit?id=' + item.id)" style="width: 100%; aspect-ratio: 1; background: #f0f2f5; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 8px 8px 0 0">
+           <el-icon :size="48" color="#909399"><Document /></el-icon>
+         </div>
          <div style="display: flex; align-items: center; background-color: white; padding: 10px; margin-bottom: 15px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px">
            <div style="flex: 1">{{ item.name }}</div>
            <a :href="'/resumeView?id=' + item.id" target="_blank">

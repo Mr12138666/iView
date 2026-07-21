@@ -46,6 +46,7 @@
             <el-menu-item index="/manager/notice" v-if="data.user.role === 'ADMIN'">系统公告</el-menu-item>
             <el-menu-item index="/manager/advertise" v-if="data.user.role === 'ADMIN'">广告信息</el-menu-item>
             <el-menu-item index="/manager/industry" v-if="data.user.role === 'ADMIN'">行业信息</el-menu-item>
+            <el-menu-item index="/manager/questionBankManage" v-if="data.user.role === 'ADMIN'">AI题库管理</el-menu-item>
             <el-menu-item index="/manager/position">职位信息</el-menu-item>
             <el-menu-item index="/manager/submit">岗位投递</el-menu-item>
           </el-sub-menu>

@@ -7,6 +7,18 @@
       </div>
 
       <div class="setup-form">
+        <!-- 目标岗位 -->
+        <div class="form-group">
+          <label class="form-label" for="jobPosition">目标岗位</label>
+          <el-input
+              id="jobPosition"
+              v-model="jobPosition"
+              maxlength="100"
+              show-word-limit
+              placeholder="例如：Java后端工程师"
+          />
+        </div>
+
         <!-- 面试类型选择 -->
         <div class="form-group">
           <label class="form-label">面试类型</label>
@@ -96,6 +108,7 @@ const emit = defineEmits(['start-interview'])
 const selectedType = ref('technical')
 const selectedDifficulty = ref('intermediate')
 const selectedDuration = ref(30)
+const jobPosition = ref('软件开发工程师')
 
 // 面试类型配置
 const interviewTypes = ref([
@@ -159,7 +172,11 @@ const getInterviewFocus = computed(() => {
 
 // 方法
 const handleStartInterview = () => {
+  if (!jobPosition.value.trim()) {
+    return
+  }
   const interviewConfig = {
+    jobPosition: jobPosition.value.trim(),
     type: selectedType.value,
     difficulty: selectedDifficulty.value,
     duration: selectedDuration.value,
@@ -173,6 +190,7 @@ const handleStartInterview = () => {
 
 // 暴露给父组件的方法和数据
 defineExpose({
+  jobPosition,
   selectedType,
   selectedDifficulty,
   selectedDuration,
@@ -754,5 +772,91 @@ defineExpose({
     margin-top: 16px;
     padding: 10px 20px;
   }
+}
+
+/* 科技风视觉重构 */
+.interview-setup {
+  background:
+      linear-gradient(rgba(34, 211, 238, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34, 211, 238, 0.05) 1px, transparent 1px),
+      radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.18), transparent 36%),
+      #06121f;
+  background-size: 42px 42px, 42px 42px, auto, auto;
+}
+
+.setup-container {
+  max-width: 940px;
+  background: rgba(8, 24, 38, 0.9);
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  border-radius: 8px;
+  box-shadow: 0 26px 90px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.setup-title {
+  color: #ecfeff;
+  background: none;
+  -webkit-text-fill-color: initial;
+}
+
+.setup-subtitle,
+.form-label,
+.option-desc,
+.duration-desc {
+  color: #9fb9c8;
+}
+
+.form-label {
+  letter-spacing: 0;
+}
+
+.option-card,
+.difficulty-option,
+.duration-option {
+  background: rgba(15, 23, 42, 0.68);
+  border-color: rgba(125, 211, 252, 0.2);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.option-card:hover,
+.difficulty-option:hover,
+.duration-option:hover {
+  background: rgba(14, 116, 144, 0.18);
+  border-color: rgba(103, 232, 249, 0.56);
+  box-shadow: 0 10px 30px rgba(8, 145, 178, 0.16);
+}
+
+.option-card.active,
+.difficulty-option.active,
+.duration-option.active {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.28), rgba(5, 150, 105, 0.2));
+  border-color: rgba(103, 232, 249, 0.72);
+  box-shadow: 0 0 0 1px rgba(103, 232, 249, 0.18) inset, 0 12px 32px rgba(8, 145, 178, 0.2);
+}
+
+.option-icon {
+  background: linear-gradient(135deg, #0891b2, #059669);
+  border-radius: 8px;
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.22);
+}
+
+.option-title {
+  color: #ecfeff;
+}
+
+.duration-value,
+.difficulty-label {
+  color: #dffaff;
+}
+
+.start-interview-btn {
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0891b2, #059669);
+  box-shadow: 0 14px 34px rgba(8, 145, 178, 0.25);
+}
+
+.start-interview-btn:hover {
+  background: linear-gradient(135deg, #0e7490, #047857);
+  box-shadow: 0 18px 42px rgba(16, 185, 129, 0.3);
 }
 </style>
