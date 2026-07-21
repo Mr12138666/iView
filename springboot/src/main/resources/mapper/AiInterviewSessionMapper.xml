@@ -51,13 +51,30 @@
           and status = 'RUNNING'
     </update>
 
+    <update id="updateToEvaluating">
+        update interview_session
+        set status = 'EVALUATING',
+            version = version + 1
+        where id = #{id}
+          and status = 'RUNNING'
+          and version = #{version}
+    </update>
+
+    <update id="updateToRunningFromEvaluating">
+        update interview_session
+        set status = 'RUNNING',
+            version = version + 1
+        where id = #{id}
+          and status = 'EVALUATING'
+    </update>
+
     <update id="updateToFinished">
         update interview_session
         set status = 'FINISHED',
             finished_at = current_timestamp,
             version = version + 1
         where id = #{id}
-          and status = 'RUNNING'
+          and status in ('RUNNING', 'EVALUATING')
     </update>
 
     <update id="updateToCancelled">

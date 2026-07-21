@@ -53,6 +53,7 @@ public class AiInterviewSessionService {
     private static final Logger log = LoggerFactory.getLogger(AiInterviewSessionService.class);
     private static final String STATUS_CREATED = "CREATED";
     private static final String STATUS_RUNNING = "RUNNING";
+    private static final String STATUS_EVALUATING = "EVALUATING";
     private static final String STATUS_FINISHED = "FINISHED";
     private static final String STATUS_CANCELLED = "CANCELLED";
     private static final String MODALITY_TEXT = "TEXT";
@@ -200,24 +201,35 @@ public class AiInterviewSessionService {
                 cancelled.getCurrentQuestionNo(), null);
     }
 
-    @Transactional
     public AiInterviewReport finish(String sessionId) {
         Account currentUser = requireUser();
         AiInterviewSession session = requireOwnedSession(sessionId, currentUser);
         AiInterviewReport existingReport = reportMapper.selectBySessionId(session.getId());
         if (existingReport != null) {
-            return existingReport;
+            return enrichReport(existingReport);
+        }
+        if (STATUS_EVALUATING.equals(session.getStatus())) {
+            throw new CustomException("409", "面试报告正在生成中，请稍后刷新");
         }
         if (!STATUS_RUNNING.equals(session.getStatus())) {
             throw new CustomException("409", "当前面试不在进行中");
         }
+        int updated = sessionMapper.updateToEvaluating(session.getId(), session.getVersion());
+        if (updated != 1) {
+            throw new CustomException("409", "面试状态已发生变化，请刷新后重试");
+        }
 
-        List<AiInterviewMessage> history = messageMapper.selectBySessionId(session.getId());
-        String rawReport = callAi(currentUser, buildReportMessages(session, history));
-        AiInterviewReport report = parseReport(session.getId(), rawReport);
-        reportMapper.insert(report);
-        sessionMapper.updateToFinished(session.getId());
-        return report;
+        try {
+            List<AiInterviewMessage> history = messageMapper.selectBySessionId(session.getId());
+            String rawReport = callAi(currentUser, buildReportMessages(session, history));
+            AiInterviewReport report = parseReport(session.getId(), rawReport);
+            reportMapper.insert(report);
+            sessionMapper.updateToFinished(session.getId());
+            return report;
+        } catch (RuntimeException e) {
+            sessionMapper.updateToRunningFromEvaluating(session.getId());
+            throw e;
+        }
     }
 
     public InterviewSessionDetail detail(String sessionId) {

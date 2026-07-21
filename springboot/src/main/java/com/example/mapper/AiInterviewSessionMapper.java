@@ -17,6 +17,10 @@ public interface AiInterviewSessionMapper {
 
     int updateQuestionNo(@Param("id") String id, @Param("questionNo") Integer questionNo);
 
+    int updateToEvaluating(@Param("id") String id, @Param("version") Integer version);
+
+    int updateToRunningFromEvaluating(@Param("id") String id);
+
     int updateToFinished(@Param("id") String id);
 
     int updateToCancelled(@Param("id") String id, @Param("version") Integer version);
