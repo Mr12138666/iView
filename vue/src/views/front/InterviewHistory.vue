@@ -132,6 +132,22 @@
             <p><b>待改进：</b>{{ detail.report.weaknesses }}</p>
             <p><b>改进建议：</b>{{ detail.report.suggestions }}</p>
             <p><b>下一步训练：</b>{{ detail.report.nextTraining }}</p>
+            <div v-if="questionReviews.length" class="question-review-list">
+              <article
+                  v-for="(review, index) in questionReviews"
+                  :key="review.questionId || index"
+                  class="question-review-card"
+              >
+                <div class="question-review-head">
+                  <span>Q{{ index + 1 }}</span>
+                  <strong>{{ review.questionTitle || `题目 ${review.questionId || index + 1}` }}</strong>
+                  <em>{{ normalizeScore(review.score) }} 分</em>
+                </div>
+                <p v-if="review.coverage"><b>覆盖情况：</b>{{ review.coverage }}</p>
+                <p v-if="review.deductionReason"><b>扣分原因：</b>{{ review.deductionReason }}</p>
+                <p v-if="review.suggestion"><b>训练建议：</b>{{ review.suggestion }}</p>
+              </article>
+            </div>
           </template>
           <el-empty v-else description="报告尚未生成" />
         </section>
@@ -175,6 +191,28 @@ const highestScore = computed(() => {
   }
   return Math.max(...data.trend.map(item => Number(item.totalScore || 0))).toFixed(1)
 })
+
+const questionReviews = computed(() => parseQuestionReviews(detail.value?.report?.questionReviews))
+
+const parseQuestionReviews = (value) => {
+  if (!value) {
+    return []
+  }
+  if (Array.isArray(value)) {
+    return value
+  }
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed : []
+  } catch (error) {
+    return []
+  }
+}
+
+const normalizeScore = (score) => {
+  const value = Number(score)
+  return Number.isFinite(value) ? Math.max(0, Math.min(100, value)).toFixed(0) : '--'
+}
 
 const scoreHeight = (score) => {
   const value = Math.max(0, Math.min(100, Number(score || 0)))
@@ -564,6 +602,51 @@ onMounted(refreshAll)
 .score-line strong {
   color: #409eff;
   font-size: 24px;
+}
+
+.question-review-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.question-review-card {
+  padding: 14px 16px;
+  border: 1px solid rgba(64, 158, 255, .18);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f8fbff, #f3fff9);
+}
+
+.question-review-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.question-review-head span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 28px;
+  border-radius: 6px;
+  color: #071625;
+  background: #d6ff65;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.question-review-head strong {
+  color: #162235;
+  font-size: 15px;
+}
+
+.question-review-head em {
+  color: #0f766e;
+  font-style: normal;
+  font-weight: 800;
 }
 
 .detail-section p {

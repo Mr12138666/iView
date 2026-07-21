@@ -122,9 +122,10 @@ public class AiInterviewSessionService {
                 .content("请开始面试，只提出第一道问题，不要一次提出多个问题。")
                 .build());
 
+        Integer firstQuestionId = selectQuestionIdByNo(session, 1);
         String aiMessage = callAi(currentUser, messages);
-        saveMessage(session.getId(), 0, "system", systemPrompt, MODALITY_TEXT);
-        saveMessage(session.getId(), 1, "assistant", aiMessage, MODALITY_TEXT);
+        saveMessage(session.getId(), 0, "system", systemPrompt, MODALITY_TEXT, null);
+        saveMessage(session.getId(), 1, "assistant", aiMessage, MODALITY_TEXT, firstQuestionId);
         sessionMapper.updateQuestionNo(session.getId(), 1);
 
         return new InterviewActionResult(session.getId(), STATUS_RUNNING, 1, aiMessage);
@@ -154,13 +155,15 @@ public class AiInterviewSessionService {
             messages = trimHistory(messages);
         }
 
+        Integer answeredQuestionId = latestAssistantQuestionId(history);
         String aiMessage = callAi(currentUser, messages);
         int currentMaxOrder = messageMapper.selectMaxOrder(session.getId());
         saveMessage(session.getId(), currentMaxOrder + 1, "user",
-                request.getAnswer().trim(), normalizeModality(request.getModality()));
-        saveMessage(session.getId(), currentMaxOrder + 2, "assistant", aiMessage, MODALITY_TEXT);
+                request.getAnswer().trim(), normalizeModality(request.getModality()), answeredQuestionId);
 
         int nextQuestionNo = (session.getCurrentQuestionNo() == null ? 0 : session.getCurrentQuestionNo()) + 1;
+        Integer nextQuestionId = selectQuestionIdByNo(session, nextQuestionNo);
+        saveMessage(session.getId(), currentMaxOrder + 2, "assistant", aiMessage, MODALITY_TEXT, nextQuestionId);
         sessionMapper.updateQuestionNo(session.getId(), nextQuestionNo);
         return new InterviewActionResult(session.getId(), STATUS_RUNNING, nextQuestionNo, aiMessage);
     }
@@ -223,7 +226,7 @@ public class AiInterviewSessionService {
         InterviewSessionDetail detail = new InterviewSessionDetail();
         detail.setSession(session);
         detail.setMessages(messageMapper.selectBySessionId(session.getId()));
-        detail.setReport(reportMapper.selectBySessionId(session.getId()));
+        detail.setReport(enrichReport(reportMapper.selectBySessionId(session.getId())));
         return detail;
     }
 
@@ -344,12 +347,17 @@ public class AiInterviewSessionService {
     }
 
     private void saveMessage(String sessionId, int order, String role, String content, String modality) {
+        saveMessage(sessionId, order, role, content, modality, null);
+    }
+
+    private void saveMessage(String sessionId, int order, String role, String content, String modality, Integer questionId) {
         AiInterviewMessage message = new AiInterviewMessage();
         message.setSessionId(sessionId);
         message.setMessageOrder(order);
         message.setRole(role);
         message.setContent(content);
         message.setModality(modality);
+        message.setQuestionId(questionId);
         messageMapper.insert(message);
     }
 
@@ -387,9 +395,35 @@ public class AiInterviewSessionService {
         return trimmed;
     }
 
+    private Integer latestAssistantQuestionId(List<AiInterviewMessage> history) {
+        if (history == null || history.isEmpty()) {
+            return null;
+        }
+        for (int i = history.size() - 1; i >= 0; i--) {
+            AiInterviewMessage message = history.get(i);
+            if ("assistant".equals(message.getRole()) && message.getQuestionId() != null) {
+                return message.getQuestionId();
+            }
+        }
+        return null;
+    }
+
+    private Integer selectQuestionIdByNo(AiInterviewSession session, int questionNo) {
+        if (questionNo < 1) {
+            return null;
+        }
+        List<InterviewQuestion> questions = selectPromptQuestions(session, questionNo);
+        if (questions.size() < questionNo) {
+            return null;
+        }
+        return questions.get(questionNo - 1).getId();
+    }
+
     private List<SparkApiService.Message> buildReportMessages(AiInterviewSession session,
                                                                List<AiInterviewMessage> history) {
         String scoringGuide = buildScoringGuide(session.getInterviewType());
+        String questionReviewContract = "\n必须额外返回 questionReviews 数组。每项包含 questionId、questionTitle、score、deductionReason、coverage、suggestion。"
+                + "questionReviews 只评价候选人已经回答过的题目；score 是 0-100 数字，deductionReason 写清扣分原因。";
         List<SparkApiService.Message> messages = new ArrayList<>();
         messages.add(SparkApiService.Message.builder()
                 .role("system")
@@ -397,7 +431,7 @@ public class AiInterviewSessionService {
                         + "JSON字段必须包含 totalScore(0-100数字)、dimensionScores(对象，维度和值)、"
                         + "strengths(字符串)、weaknesses(字符串)、suggestions(字符串)、nextTraining(字符串)。"
                         + "请依据面试类型、岗位、完整对话和评分规则进行客观评价。"
-                        + scoringGuide)
+                        + scoringGuide + questionReviewContract)
                 .build());
         messages.add(SparkApiService.Message.builder()
                 .role("user")
@@ -407,6 +441,43 @@ public class AiInterviewSessionService {
                         + "\n对话记录：\n" + formatHistory(history))
                 .build());
         return messages;
+    }
+
+    private List<InterviewQuestion> selectPromptQuestions(AiInterviewSession session, int limit) {
+        QuestionBank probe = new QuestionBank();
+        probe.setInterviewType(session.getInterviewType());
+        probe.setDifficulty(session.getDifficulty());
+        probe.setEnabled(1);
+        List<QuestionBank> banks = questionBankMapper.selectAll(probe);
+        if (banks == null || banks.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<QuestionBank> matchedBanks = banks.stream()
+                .filter(bank -> matchJobDirection(bank.getJobDirection(), session.getJobPosition()))
+                .limit(2)
+                .collect(Collectors.toList());
+        if (matchedBanks.isEmpty()) {
+            matchedBanks = banks.stream().limit(2).collect(Collectors.toList());
+        }
+
+        List<InterviewQuestion> questions = new ArrayList<>();
+        for (QuestionBank bank : matchedBanks) {
+            QuestionBankQuestion relationProbe = new QuestionBankQuestion();
+            relationProbe.setQuestionBankId(bank.getId());
+            List<QuestionBankQuestion> relations = questionBankQuestionMapper.selectAll(relationProbe);
+            for (QuestionBankQuestion relation : relations) {
+                if (questions.size() >= limit) {
+                    break;
+                }
+                InterviewQuestion question = interviewQuestionMapper.selectById(relation.getQuestionId());
+                if (question == null || question.getEnabled() == null || question.getEnabled() != 1) {
+                    continue;
+                }
+                questions.add(question);
+            }
+        }
+        return questions;
     }
 
     private String buildQuestionBankPrompt(AiInterviewSession session) {
@@ -498,7 +569,11 @@ public class AiInterviewSessionService {
     private String formatHistory(List<AiInterviewMessage> history) {
         StringBuilder builder = new StringBuilder();
         for (AiInterviewMessage message : history) {
-            builder.append(message.getRole()).append(": ")
+            builder.append(message.getRole());
+            if (message.getQuestionId() != null) {
+                builder.append("[questionId=").append(message.getQuestionId()).append("]");
+            }
+            builder.append(": ")
                     .append(message.getContent()).append("\n");
         }
         return builder.toString();
@@ -533,12 +608,37 @@ public class AiInterviewSessionService {
             if (dimensionScores != null) {
                 report.setDimensionScores(JSON.toJSONString(dimensionScores));
             }
+            Object questionReviews = json.get("questionReviews");
+            if (questionReviews != null) {
+                report.setQuestionReviews(JSON.toJSONString(questionReviews));
+            }
             report.setStrengths(json.getString("strengths"));
             report.setWeaknesses(json.getString("weaknesses"));
             report.setSuggestions(json.getString("suggestions"));
             report.setNextTraining(json.getString("nextTraining"));
         } catch (Exception ignored) {
             // AI 偶尔会返回非 JSON 文本，保留 rawContent，确保报告仍然可查看。
+        }
+        return report;
+    }
+
+    private AiInterviewReport enrichReport(AiInterviewReport report) {
+        if (report == null || !blank(report.getQuestionReviews()) || blank(report.getRawContent())) {
+            return report;
+        }
+        try {
+            String normalized = report.getRawContent().trim();
+            if (normalized.startsWith("```")) {
+                normalized = normalized.replaceFirst("^```(?:json)?\\s*", "")
+                        .replaceFirst("\\s*```$", "");
+            }
+            JSONObject json = JSON.parseObject(normalized);
+            Object questionReviews = json == null ? null : json.get("questionReviews");
+            if (questionReviews != null) {
+                report.setQuestionReviews(JSON.toJSONString(questionReviews));
+            }
+        } catch (Exception ignored) {
+            // Older reports may contain plain-text raw content.
         }
         return report;
     }

@@ -16,6 +16,7 @@ public class AiInterviewReport {
     private String weaknesses;
     private String suggestions;
     private String nextTraining;
+    private String questionReviews;
     private String rawContent;
     private String status;
     private Date createdAt;
@@ -83,6 +84,14 @@ public class AiInterviewReport {
 
     public void setNextTraining(String nextTraining) {
         this.nextTraining = nextTraining;
+    }
+
+    public String getQuestionReviews() {
+        return questionReviews;
+    }
+
+    public void setQuestionReviews(String questionReviews) {
+        this.questionReviews = questionReviews;
     }
 
     public String getRawContent() {
