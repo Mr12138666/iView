@@ -86,6 +86,31 @@
         </el-descriptions>
 
         <section class="detail-section">
+          <h3>多模态材料</h3>
+          <div v-loading="multimodalLoading" class="multimodal-panel">
+            <div v-if="multimodalRecords.length" class="multimodal-list">
+              <article
+                  v-for="record in multimodalRecords"
+                  :key="record.id"
+                  class="multimodal-item"
+              >
+                <div class="multimodal-meta">
+                  <el-tag :type="modalityTagType(record.modality)" effect="dark">
+                    {{ modalityLabel(record.modality) }}
+                  </el-tag>
+                  <span>#{{ record.id }}</span>
+                  <span>{{ record.status || 'RESERVED' }}</span>
+                </div>
+                <p>{{ recordSummary(record) }}</p>
+                <pre v-if="record.codeContent" class="code-preview">{{ previewCode(record.codeContent) }}</pre>
+                <small v-if="record.suggestion">{{ record.suggestion }}</small>
+              </article>
+            </div>
+            <el-empty v-else description="暂无多模态材料" />
+          </div>
+        </section>
+
+        <section class="detail-section">
           <h3>对话记录</h3>
           <div v-if="detail.messages?.length" class="message-list">
             <div v-for="message in detail.messages" :key="message.id" class="message-item">
@@ -124,8 +149,10 @@ import request from '@/utils/request.js'
 
 const loading = ref(false)
 const trendLoading = ref(false)
+const multimodalLoading = ref(false)
 const detailVisible = ref(false)
 const detail = ref(null)
+const multimodalRecords = ref([])
 const data = reactive({
   records: [],
   trend: [],
@@ -169,6 +196,45 @@ const statusType = (status) => ({
   FINISHED: 'success',
   CANCELLED: 'danger'
 }[status] || '')
+
+const modalityLabel = (modality) => ({
+  AUDIO: '语音',
+  VIDEO: '视频',
+  CODE: '代码'
+}[modality] || '材料')
+
+const modalityTagType = (modality) => ({
+  AUDIO: 'success',
+  VIDEO: 'warning',
+  CODE: 'primary'
+}[modality] || 'info')
+
+const recordSummary = (record) => {
+  if (record.modality === 'CODE') {
+    return `语言：${record.codeLanguage || 'unknown'}`
+  }
+  if (record.modality === 'AUDIO') {
+    return formatPendingMarker(record.audioUrl, '音频材料已记录')
+  }
+  if (record.modality === 'VIDEO') {
+    return formatPendingMarker(record.videoUrl, '视频材料已记录')
+  }
+  return '材料已记录'
+}
+
+const formatPendingMarker = (value, fallback) => {
+  if (!value) {
+    return fallback
+  }
+  return value.replace('pending://', '待处理：')
+}
+
+const previewCode = (code) => {
+  if (!code) {
+    return ''
+  }
+  return code.length > 260 ? `${code.slice(0, 260)}...` : code
+}
 
 const loadTrend = async () => {
   trendLoading.value = true
@@ -216,14 +282,33 @@ const handleSizeChange = () => {
   loadPage()
 }
 
+const loadMultimodalRecords = async (sessionId) => {
+  multimodalLoading.value = true
+  try {
+    const response = await request.get(`/api/multimodal/session/${sessionId}`)
+    if (response.code !== '200') {
+      throw new Error(response.msg || '多模态材料加载失败')
+    }
+    multimodalRecords.value = response.data || []
+  } catch (error) {
+    multimodalRecords.value = []
+    ElMessage.warning(error.message || '多模态材料加载失败')
+  } finally {
+    multimodalLoading.value = false
+  }
+}
+
 const openDetail = async (id) => {
   try {
+    detail.value = null
+    multimodalRecords.value = []
     const response = await request.get(`/api/interview/session/${id}`)
     if (response.code !== '200') {
       throw new Error(response.msg || '面试详情加载失败')
     }
     detail.value = response.data
     detailVisible.value = true
+    loadMultimodalRecords(id)
   } catch (error) {
     ElMessage.error(error.message || '面试详情加载失败')
   }
@@ -384,6 +469,60 @@ onMounted(refreshAll)
 .detail-section h3 {
   margin: 0 0 14px;
   color: #1f2937;
+}
+
+.multimodal-panel {
+  min-height: 108px;
+}
+
+.multimodal-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.multimodal-item {
+  padding: 14px;
+  border: 1px solid rgba(64, 158, 255, .18);
+  border-radius: 8px;
+  background:
+      linear-gradient(135deg, rgba(240, 249, 255, .96), rgba(246, 255, 252, .92));
+}
+
+.multimodal-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.multimodal-item p {
+  margin: 10px 0 0;
+  color: #223044;
+  line-height: 1.6;
+}
+
+.multimodal-item small {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.code-preview {
+  max-height: 136px;
+  margin: 10px 0 0;
+  padding: 12px;
+  overflow: auto;
+  border-radius: 6px;
+  color: #d8fbff;
+  background: #071625;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
 }
 
 .message-list {
