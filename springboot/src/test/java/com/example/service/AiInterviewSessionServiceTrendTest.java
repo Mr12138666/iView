@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.example.common.enums.RoleEnum;
+import com.example.dto.ai.ReportSummary;
 import com.example.dto.ai.ReportTrendItem;
 import com.example.entity.Account;
 import com.example.entity.AiInterviewReport;
@@ -46,6 +47,42 @@ class AiInterviewSessionServiceTrendTest {
             assertThat(trend.get(0).getTotalScore()).isEqualByComparingTo("72");
             assertThat(trend.get(1).getSessionId()).isEqualTo("newer");
             assertThat(trend.get(1).getDimensionScores()).isEqualTo("{\"技术深度\":88}");
+        }
+    }
+
+    @Test
+    void summaryAggregatesScoresWeakDimensionsAndTrainingSuggestions() {
+        AiInterviewSessionMapper sessionMapper = mock(AiInterviewSessionMapper.class);
+        AiInterviewReportMapper reportMapper = mock(AiInterviewReportMapper.class);
+        AiInterviewSessionService service = new AiInterviewSessionService();
+        ReflectionTestUtils.setField(service, "sessionMapper", sessionMapper);
+        ReflectionTestUtils.setField(service, "reportMapper", reportMapper);
+
+        AiInterviewSession newer = session("newer", "Java backend", "TECHNICAL", new Date(2000));
+        AiInterviewSession older = session("older", "Java backend", "TECHNICAL", new Date(1000));
+        when(sessionMapper.selectByUserId(7, "FINISHED")).thenReturn(List.of(newer, older));
+        AiInterviewReport newerReport = report("newer", "90", "{\"system design\":65,\"communication\":86}");
+        newerReport.setNextTraining("Practice system design tradeoffs.");
+        AiInterviewReport olderReport = report("older", "70", "{\"system design\":72,\"communication\":78}");
+        olderReport.setNextTraining("Review project experience.");
+        when(reportMapper.selectBySessionId("newer")).thenReturn(newerReport);
+        when(reportMapper.selectBySessionId("older")).thenReturn(olderReport);
+
+        try (MockedStatic<TokenUtils> tokenUtils = mockUser()) {
+            ReportSummary summary = service.summary();
+
+            assertThat(summary.getReportCount()).isEqualTo(2);
+            assertThat(summary.getAverageScore()).isEqualByComparingTo("80.0");
+            assertThat(summary.getHighestScore()).isEqualByComparingTo("90");
+            assertThat(summary.getLatestScore()).isEqualByComparingTo("90");
+            assertThat(summary.getScoreDelta()).isEqualByComparingTo("20");
+            assertThat(summary.getWeakestDimensions()).hasSize(2);
+            assertThat(summary.getWeakestDimensions().get(0).getName()).isEqualTo("system design");
+            assertThat(summary.getWeakestDimensions().get(0).getAverageScore()).isEqualByComparingTo("68.5");
+            assertThat(summary.getTrainingSuggestions()).containsExactly(
+                    "Practice system design tradeoffs.",
+                    "Review project experience.");
+            assertThat(summary.getTrend()).hasSize(2);
         }
     }
 

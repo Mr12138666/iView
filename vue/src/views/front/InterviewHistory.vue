@@ -9,10 +9,10 @@
       <el-button type="primary" :icon="Refresh" @click="refreshAll">刷新</el-button>
     </section>
 
-    <section class="trend-console" v-loading="trendLoading">
+    <section class="trend-console" v-loading="summaryLoading">
       <div class="metric-card">
         <span>报告数</span>
-        <strong>{{ data.trend.length }}</strong>
+        <strong>{{ data.summary.reportCount || 0 }}</strong>
       </div>
       <div class="metric-card">
         <span>平均分</span>
@@ -21,6 +21,10 @@
       <div class="metric-card">
         <span>最高分</span>
         <strong>{{ highestScore }}</strong>
+      </div>
+      <div class="metric-card">
+        <span>最新变化</span>
+        <strong :class="{ positive: scoreDeltaValue > 0, negative: scoreDeltaValue < 0 }">{{ scoreDelta }}</strong>
       </div>
       <div class="trend-strip">
         <div class="trend-title">
@@ -39,6 +43,26 @@
           </div>
         </div>
         <div v-else class="empty-trend">暂无可视化报告</div>
+      </div>
+      <div class="signal-panel">
+        <div class="trend-title">
+          <el-icon><TrendCharts /></el-icon>
+          <span>能力信号</span>
+        </div>
+        <div v-if="weakestDimensions.length" class="weak-dimension-list">
+          <div
+              v-for="dimension in weakestDimensions"
+              :key="dimension.name"
+              class="weak-dimension"
+          >
+            <span>{{ dimension.name }}</span>
+            <strong>{{ formatScore(dimension.averageScore) }}</strong>
+          </div>
+        </div>
+        <div v-else class="empty-trend">完成面试后生成薄弱维度</div>
+        <div v-if="trainingSuggestions.length" class="training-list">
+          <p v-for="item in trainingSuggestions" :key="item">{{ item }}</p>
+        </div>
       </div>
     </section>
 
@@ -164,7 +188,7 @@ import { Refresh, TrendCharts } from '@element-plus/icons-vue'
 import request from '@/utils/request.js'
 
 const loading = ref(false)
-const trendLoading = ref(false)
+const summaryLoading = ref(false)
 const multimodalLoading = ref(false)
 const detailVisible = ref(false)
 const detail = ref(null)
@@ -172,25 +196,39 @@ const multimodalRecords = ref([])
 const data = reactive({
   records: [],
   trend: [],
+  summary: {},
   total: 0,
   pageNum: 1,
   pageSize: 10
 })
 
 const averageScore = computed(() => {
-  if (!data.trend.length) {
+  if (!data.summary.reportCount) {
     return '--'
   }
-  const total = data.trend.reduce((sum, item) => sum + Number(item.totalScore || 0), 0)
-  return (total / data.trend.length).toFixed(1)
+  return formatScore(data.summary.averageScore)
 })
 
 const highestScore = computed(() => {
-  if (!data.trend.length) {
+  if (!data.summary.reportCount) {
     return '--'
   }
-  return Math.max(...data.trend.map(item => Number(item.totalScore || 0))).toFixed(1)
+  return formatScore(data.summary.highestScore)
 })
+
+const scoreDeltaValue = computed(() => Number(data.summary.scoreDelta || 0))
+
+const scoreDelta = computed(() => {
+  if (!data.summary.reportCount || data.summary.reportCount < 2) {
+    return '--'
+  }
+  const value = scoreDeltaValue.value
+  return `${value > 0 ? '+' : ''}${formatScore(value)}`
+})
+
+const weakestDimensions = computed(() => data.summary.weakestDimensions || [])
+
+const trainingSuggestions = computed(() => data.summary.trainingSuggestions || [])
 
 const questionReviews = computed(() => parseQuestionReviews(detail.value?.report?.questionReviews))
 
@@ -212,6 +250,11 @@ const parseQuestionReviews = (value) => {
 const normalizeScore = (score) => {
   const value = Number(score)
   return Number.isFinite(value) ? Math.max(0, Math.min(100, value)).toFixed(0) : '--'
+}
+
+const formatScore = (score) => {
+  const value = Number(score)
+  return Number.isFinite(value) ? value.toFixed(1) : '--'
 }
 
 const scoreHeight = (score) => {
@@ -274,18 +317,19 @@ const previewCode = (code) => {
   return code.length > 260 ? `${code.slice(0, 260)}...` : code
 }
 
-const loadTrend = async () => {
-  trendLoading.value = true
+const loadSummary = async () => {
+  summaryLoading.value = true
   try {
-    const response = await request.get('/api/report/trend')
+    const response = await request.get('/api/report/summary')
     if (response.code !== '200') {
       throw new Error(response.msg || '能力趋势加载失败')
     }
-    data.trend = response.data || []
+    data.summary = response.data || {}
+    data.trend = data.summary.trend || []
   } catch (error) {
     ElMessage.error(error.message || '能力趋势加载失败')
   } finally {
-    trendLoading.value = false
+    summaryLoading.value = false
   }
 }
 
@@ -312,7 +356,7 @@ const loadPage = async () => {
 
 const refreshAll = () => {
   loadPage()
-  loadTrend()
+  loadSummary()
 }
 
 const handleSizeChange = () => {
@@ -408,7 +452,7 @@ onMounted(refreshAll)
 
 .trend-console {
   display: grid;
-  grid-template-columns: repeat(3, minmax(130px, .24fr)) minmax(300px, 1fr);
+  grid-template-columns: repeat(4, minmax(120px, .22fr));
   gap: 12px;
   margin-top: 16px;
   padding: 16px;
@@ -435,7 +479,17 @@ onMounted(refreshAll)
   line-height: 1;
 }
 
-.trend-strip {
+.metric-card strong.positive {
+  color: #68f3ff;
+}
+
+.metric-card strong.negative {
+  color: #ff8a8a;
+}
+
+.trend-strip,
+.signal-panel {
+  grid-column: span 2;
   min-height: 112px;
   padding: 16px;
   border: 1px solid rgba(104, 243, 255, .18);
@@ -482,6 +536,49 @@ onMounted(refreshAll)
   height: 62px;
   margin-top: 14px;
   color: #8da6b5;
+}
+
+.weak-dimension-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.weak-dimension {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 6px;
+  color: #d8fbff;
+  background: rgba(255, 255, 255, .05);
+}
+
+.weak-dimension span {
+  min-width: 0;
+  overflow: hidden;
+  color: #a9bdca;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weak-dimension strong {
+  color: #d6ff65;
+}
+
+.training-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.training-list p {
+  margin: 0;
+  color: #a9bdca;
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .history-table-panel {
@@ -656,10 +753,11 @@ onMounted(refreshAll)
 
 @media (max-width: 980px) {
   .trend-console {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .trend-strip {
+  .trend-strip,
+  .signal-panel {
     grid-column: 1 / -1;
   }
 }
@@ -677,6 +775,11 @@ onMounted(refreshAll)
 
   .trend-console {
     grid-template-columns: 1fr;
+  }
+
+  .trend-strip,
+  .signal-panel {
+    grid-column: auto;
   }
 
   .history-table-panel {

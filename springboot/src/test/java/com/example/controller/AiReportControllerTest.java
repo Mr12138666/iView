@@ -2,6 +2,7 @@ package com.example.controller;
 
 import com.example.common.Result;
 import com.example.dto.ai.InterviewSessionDetail;
+import com.example.dto.ai.ReportSummary;
 import com.example.dto.ai.ReportTrendItem;
 import com.example.entity.AiInterviewReport;
 import com.example.service.AiInterviewSessionService;
@@ -69,5 +70,22 @@ class AiReportControllerTest {
         assertThat(result.getCode()).isEqualTo("200");
         assertThat(result.getData()).isSameAs(trend);
         verify(interviewService).trend();
+    }
+
+    @Test
+    void summaryDelegatesToSessionSummary() {
+        AiInterviewSessionService interviewService = mock(AiInterviewSessionService.class);
+        ReportSummary summary = new ReportSummary();
+        summary.setReportCount(3);
+        when(interviewService.summary()).thenReturn(summary);
+
+        AiReportController controller = new AiReportController();
+        ReflectionTestUtils.setField(controller, "interviewService", interviewService);
+
+        Result result = controller.summary();
+
+        assertThat(result.getCode()).isEqualTo("200");
+        assertThat(result.getData()).isSameAs(summary);
+        verify(interviewService).summary();
     }
 }

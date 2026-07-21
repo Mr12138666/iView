@@ -35,4 +35,9 @@ public class AiReportController {
     public Result trend() {
         return Result.success(interviewService.trend());
     }
+
+    @GetMapping("/summary")
+    public Result summary() {
+        return Result.success(interviewService.summary());
+    }
 }

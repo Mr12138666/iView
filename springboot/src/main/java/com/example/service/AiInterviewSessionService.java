@@ -3,11 +3,13 @@ package com.example.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.example.common.enums.RoleEnum;
+import com.example.dto.ai.DimensionScoreSummary;
 import com.example.dto.ai.AnswerInterviewRequest;
 import com.example.dto.ai.CreateInterviewRequest;
 import com.example.dto.ai.InterviewActionResult;
 import com.example.dto.ai.InterviewPageRequest;
 import com.example.dto.ai.InterviewSessionDetail;
+import com.example.dto.ai.ReportSummary;
 import com.example.dto.ai.ReportTrendItem;
 import com.example.entity.Account;
 import com.example.entity.AiInterviewMessage;
@@ -35,9 +37,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -278,6 +283,134 @@ public class AiInterviewSessionService {
         }
         Collections.reverse(trend);
         return trend;
+    }
+
+    public ReportSummary summary() {
+        Account currentUser = requireUser();
+        List<AiInterviewSession> sessions = sessionMapper.selectByUserId(currentUser.getId(), STATUS_FINISHED);
+        ReportSummary summary = new ReportSummary();
+        List<ReportTrendItem> trend = new ArrayList<>();
+        List<String> suggestions = new ArrayList<>();
+        Map<String, List<BigDecimal>> dimensionScores = new LinkedHashMap<>();
+        BigDecimal totalScore = BigDecimal.ZERO;
+        BigDecimal highestScore = null;
+
+        if (sessions != null) {
+            for (AiInterviewSession session : sessions.stream().limit(12).collect(Collectors.toList())) {
+                AiInterviewReport report = reportMapper.selectBySessionId(session.getId());
+                if (report == null) {
+                    continue;
+                }
+                ReportTrendItem item = toTrendItem(session, report);
+                trend.add(item);
+                BigDecimal score = report.getTotalScore() == null ? BigDecimal.ZERO : report.getTotalScore();
+                totalScore = totalScore.add(score);
+                highestScore = highestScore == null || score.compareTo(highestScore) > 0 ? score : highestScore;
+                collectDimensionScores(dimensionScores, report.getDimensionScores());
+                addSuggestion(suggestions, report.getNextTraining());
+            }
+        }
+
+        Collections.reverse(trend);
+        summary.setTrend(trend);
+        summary.setReportCount(trend.size());
+        if (trend.isEmpty()) {
+            summary.setAverageScore(BigDecimal.ZERO);
+            summary.setHighestScore(BigDecimal.ZERO);
+            summary.setLatestScore(BigDecimal.ZERO);
+            summary.setScoreDelta(BigDecimal.ZERO);
+            return summary;
+        }
+        summary.setAverageScore(totalScore.divide(BigDecimal.valueOf(trend.size()), 1, RoundingMode.HALF_UP));
+        summary.setHighestScore(highestScore);
+        BigDecimal latestScore = nullToZero(trend.get(trend.size() - 1).getTotalScore());
+        summary.setLatestScore(latestScore);
+        if (trend.size() > 1) {
+            BigDecimal previousScore = nullToZero(trend.get(trend.size() - 2).getTotalScore());
+            summary.setScoreDelta(latestScore.subtract(previousScore));
+        } else {
+            summary.setScoreDelta(BigDecimal.ZERO);
+        }
+        summary.setWeakestDimensions(buildWeakestDimensions(dimensionScores));
+        summary.setTrainingSuggestions(suggestions.stream().limit(3).collect(Collectors.toList()));
+        return summary;
+    }
+
+    private ReportTrendItem toTrendItem(AiInterviewSession session, AiInterviewReport report) {
+        ReportTrendItem item = new ReportTrendItem();
+        item.setSessionId(session.getId());
+        item.setJobPosition(session.getJobPosition());
+        item.setInterviewType(session.getInterviewType());
+        item.setDifficulty(session.getDifficulty());
+        item.setFinishedAt(session.getFinishedAt());
+        item.setTotalScore(report.getTotalScore());
+        item.setDimensionScores(report.getDimensionScores());
+        return item;
+    }
+
+    private void collectDimensionScores(Map<String, List<BigDecimal>> target, String dimensionScores) {
+        if (blank(dimensionScores)) {
+            return;
+        }
+        try {
+            JSONObject json = JSON.parseObject(dimensionScores);
+            if (json == null) {
+                return;
+            }
+            for (Map.Entry<String, Object> entry : json.entrySet()) {
+                BigDecimal score = toBigDecimal(entry.getValue());
+                if (score == null) {
+                    continue;
+                }
+                target.computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(score);
+            }
+        } catch (Exception ignored) {
+            // Keep analytics available even when an older report stores non-JSON dimensions.
+        }
+    }
+
+    private List<DimensionScoreSummary> buildWeakestDimensions(Map<String, List<BigDecimal>> dimensionScores) {
+        return dimensionScores.entrySet().stream()
+                .map(entry -> new DimensionScoreSummary(entry.getKey(), average(entry.getValue())))
+                .sorted((left, right) -> left.getAverageScore().compareTo(right.getAverageScore()))
+                .limit(3)
+                .collect(Collectors.toList());
+    }
+
+    private BigDecimal average(List<BigDecimal> values) {
+        if (values == null || values.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal total = BigDecimal.ZERO;
+        for (BigDecimal value : values) {
+            total = total.add(value);
+        }
+        return total.divide(BigDecimal.valueOf(values.size()), 1, RoundingMode.HALF_UP);
+    }
+
+    private void addSuggestion(List<String> suggestions, String suggestion) {
+        if (blank(suggestion)) {
+            return;
+        }
+        String normalized = suggestion.trim();
+        if (!suggestions.contains(normalized)) {
+            suggestions.add(normalized);
+        }
+    }
+
+    private BigDecimal nullToZero(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
+    private BigDecimal toBigDecimal(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return new BigDecimal(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private InterviewActionResult latestAssistantResult(AiInterviewSession session) {
