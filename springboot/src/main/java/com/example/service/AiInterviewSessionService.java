@@ -29,6 +29,8 @@ import com.example.utils.TokenUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +50,7 @@ import java.util.stream.Collectors;
 @Service
 public class AiInterviewSessionService {
 
+    private static final Logger log = LoggerFactory.getLogger(AiInterviewSessionService.class);
     private static final String STATUS_CREATED = "CREATED";
     private static final String STATUS_RUNNING = "RUNNING";
     private static final String STATUS_FINISHED = "FINISHED";
@@ -333,6 +336,9 @@ public class AiInterviewSessionService {
         try {
             return sparkApiService.getSparkResponse(String.valueOf(currentUser.getId()), messages);
         } catch (Exception e) {
+            log.warn("AI interview Spark call failed. userId: {}, messageCount: {}",
+                    currentUser == null ? null : currentUser.getId(),
+                    messages == null ? 0 : messages.size(), e);
             throw new CustomException("502", "AI服务暂时不可用，请稍后重试");
         }
     }

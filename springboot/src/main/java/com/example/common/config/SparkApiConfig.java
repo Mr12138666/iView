@@ -13,6 +13,8 @@ public class SparkApiConfig {
     private String hostUrl;
     private String apiPassword; // 新增
     private String modelName;   // 新增
+    private String chatWsUrl;
+    private String chatDomain;
     private String ttsWsUrl;
 
     // Standard Getters and Setters
@@ -31,6 +33,12 @@ public class SparkApiConfig {
 
     public String getModelName() { return modelName; } // 新增
     public void setModelName(String modelName) { this.modelName = modelName; } // 新增
+
+    public String getChatWsUrl() { return chatWsUrl; }
+    public void setChatWsUrl(String chatWsUrl) { this.chatWsUrl = chatWsUrl; }
+
+    public String getChatDomain() { return chatDomain; }
+    public void setChatDomain(String chatDomain) { this.chatDomain = chatDomain; }
 
     public String getTtsWsUrl() { return ttsWsUrl; }
     public void setTtsWsUrl(String ttsWsUrl) { this.ttsWsUrl = ttsWsUrl; }

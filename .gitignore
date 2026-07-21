@@ -1,0 +1,22 @@
+# Local secrets
+.env
+*.local
+springboot/.env
+
+# Build outputs
+springboot/target/
+vue/dist/
+springboot/*.log
+
+# Dependencies and tool caches
+vue/node_modules/
+vue/.vite/
+vue/node_modules/.vite/
+
+# IDE files
+.idea/
+*.iml
+
+# OS noise
+.DS_Store
+Thumbs.db
