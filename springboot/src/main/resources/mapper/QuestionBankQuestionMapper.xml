@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.QuestionBankQuestionMapper">
+
+    <select id="selectAll" resultType="com.example.entity.QuestionBankQuestion">
+        select qbq.*, qb.title as bankTitle, q.title as questionTitle
+        from question_bank_question qbq
+        left join question_bank qb on qbq.question_bank_id = qb.id
+        left join interview_question q on qbq.question_id = q.id
+        <where>
+            <if test="questionBankId != null">and qbq.question_bank_id = #{questionBankId}</if>
+            <if test="questionId != null">and qbq.question_id = #{questionId}</if>
+        </where>
+        order by qbq.sort_order asc, qbq.id asc
+    </select>
+
+    <select id="selectById" resultType="com.example.entity.QuestionBankQuestion">
+        select qbq.*, qb.title as bankTitle, q.title as questionTitle
+        from question_bank_question qbq
+        left join question_bank qb on qbq.question_bank_id = qb.id
+        left join interview_question q on qbq.question_id = q.id
+        where qbq.id = #{id}
+    </select>
+
+    <select id="selectOne" resultType="com.example.entity.QuestionBankQuestion">
+        select * from question_bank_question
+        where question_bank_id = #{questionBankId} and question_id = #{questionId}
+        limit 1
+    </select>
+
+    <insert id="insert" parameterType="com.example.entity.QuestionBankQuestion" useGeneratedKeys="true" keyProperty="id">
+        insert into question_bank_question (question_bank_id, question_id, sort_order)
+        values (#{questionBankId}, #{questionId}, #{sortOrder})
+    </insert>
+
+    <update id="updateById" parameterType="com.example.entity.QuestionBankQuestion">
+        update question_bank_question
+        <set>
+            <if test="questionBankId != null">question_bank_id = #{questionBankId},</if>
+            <if test="questionId != null">question_id = #{questionId},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from question_bank_question where id = #{id}
+    </delete>
+</mapper>

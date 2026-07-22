@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.MultimodalRecordMapper">
+
+    <insert id="insert" parameterType="com.example.entity.MultimodalRecord"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into multimodal_record
+        (session_id, user_id, modality, status, audio_url, video_url, transcript,
+         visual_result, code_language, code_content, compile_output, run_output, suggestion)
+        values
+        (#{sessionId}, #{userId}, #{modality}, #{status}, #{audioUrl}, #{videoUrl}, #{transcript},
+         #{visualResult}, #{codeLanguage}, #{codeContent}, #{compileOutput}, #{runOutput}, #{suggestion})
+    </insert>
+
+    <select id="selectById" resultType="com.example.entity.MultimodalRecord">
+        select id, session_id, user_id, modality, status, audio_url, video_url, transcript,
+               visual_result, code_language, code_content, compile_output, run_output,
+               suggestion, created_at, updated_at
+        from multimodal_record
+        where id = #{id}
+    </select>
+
+    <select id="selectBySessionId" resultType="com.example.entity.MultimodalRecord">
+        select id, session_id, user_id, modality, status, audio_url, video_url, transcript,
+               visual_result, code_language, code_content, compile_output, run_output,
+               suggestion, created_at, updated_at
+        from multimodal_record
+        where session_id = #{sessionId}
+          and user_id = #{userId}
+        order by created_at asc, id asc
+    </select>
+</mapper>

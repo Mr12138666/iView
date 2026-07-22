@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS multimodal_record (
+    id bigint NOT NULL AUTO_INCREMENT,
+    session_id varchar(36) NULL,
+    user_id int NOT NULL,
+    modality varchar(20) NOT NULL,
+    status varchar(20) NOT NULL DEFAULT 'RESERVED',
+    audio_url varchar(500) NULL,
+    video_url varchar(500) NULL,
+    transcript text NULL,
+    visual_result longtext NULL,
+    code_language varchar(50) NULL,
+    code_content longtext NULL,
+    compile_output text NULL,
+    run_output text NULL,
+    suggestion text NULL,
+    created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_multimodal_record_session (session_id, created_at),
+    KEY idx_multimodal_record_user (user_id, created_at),
+    KEY idx_multimodal_record_modality (modality)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,0 +1,41 @@
+server:
+  port: 9090
+
+# 数据库配置
+spring:
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:./springboot/.env[.properties]
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/xm_job?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2b8&allowPublicKeyRetrieval=true}
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+
+# 配置mybatis实体和xml映射
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:mapper/*.xml
+
+fileBaseUrl: ${FILE_BASE_URL:http://localhost:${server.port}}
+
+# 讯飞星火大模型配置
+xfyun:
+  spark:
+    hostUrl: ${XFYUN_SPARK_HOST_URL:https://spark-api-open.xf-yun.com/x2/chat/completions}
+    apiPassword: ${XFYUN_SPARK_API_PASSWORD:}
+    modelName: ${XFYUN_SPARK_MODEL:spark-x}
+    chatWsUrl: ${XFYUN_SPARK_WS_URL:wss://spark-api.xf-yun.com/v3.5/chat}
+    chatDomain: ${XFYUN_SPARK_DOMAIN:generalv3.5}
+    appid: ${XFYUN_TTS_APP_ID:}
+    apikey: ${XFYUN_TTS_API_KEY:}
+    apisecret: ${XFYUN_TTS_API_SECRET:}
+    ttsWsUrl: ${XFYUN_TTS_WS_URL:wss://tts-api.xfyun.cn/v2/tts}

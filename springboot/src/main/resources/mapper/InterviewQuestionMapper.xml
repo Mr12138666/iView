@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.InterviewQuestionMapper">
+
+    <select id="selectAll" resultType="com.example.entity.InterviewQuestion">
+        select * from interview_question
+        <where>
+            <if test="title != null and title != ''">and title like concat('%', #{title}, '%')</if>
+            <if test="interviewType != null and interviewType != ''">and interview_type = #{interviewType}</if>
+            <if test="difficulty != null and difficulty != ''">and difficulty = #{difficulty}</if>
+            <if test="tags != null and tags != ''">and tags like concat('%', #{tags}, '%')</if>
+            <if test="enabled != null">and enabled = #{enabled}</if>
+        </where>
+        order by updated_at desc
+    </select>
+
+    <insert id="insert" parameterType="com.example.entity.InterviewQuestion" useGeneratedKeys="true" keyProperty="id">
+        insert into interview_question
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null">title,</if>
+            <if test="content != null">content,</if>
+            <if test="interviewType != null">interview_type,</if>
+            <if test="difficulty != null">difficulty,</if>
+            <if test="tags != null">tags,</if>
+            <if test="referenceAnswer != null">reference_answer,</if>
+            <if test="followUpPoints != null">follow_up_points,</if>
+            <if test="scoringDimensions != null">scoring_dimensions,</if>
+            <if test="enabled != null">enabled,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="title != null">#{title},</if>
+            <if test="content != null">#{content},</if>
+            <if test="interviewType != null">#{interviewType},</if>
+            <if test="difficulty != null">#{difficulty},</if>
+            <if test="tags != null">#{tags},</if>
+            <if test="referenceAnswer != null">#{referenceAnswer},</if>
+            <if test="followUpPoints != null">#{followUpPoints},</if>
+            <if test="scoringDimensions != null">#{scoringDimensions},</if>
+            <if test="enabled != null">#{enabled},</if>
+        </trim>
+    </insert>
+
+    <update id="updateById" parameterType="com.example.entity.InterviewQuestion">
+        update interview_question
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="interviewType != null">interview_type = #{interviewType},</if>
+            <if test="difficulty != null">difficulty = #{difficulty},</if>
+            <if test="tags != null">tags = #{tags},</if>
+            <if test="referenceAnswer != null">reference_answer = #{referenceAnswer},</if>
+            <if test="followUpPoints != null">follow_up_points = #{followUpPoints},</if>
+            <if test="scoringDimensions != null">scoring_dimensions = #{scoringDimensions},</if>
+            <if test="enabled != null">enabled = #{enabled},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from interview_question where id = #{id}
+    </delete>
+</mapper>
