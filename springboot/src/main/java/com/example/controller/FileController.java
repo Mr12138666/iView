@@ -5,10 +5,11 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Dict;
 import cn.hutool.core.util.StrUtil;
 import com.example.common.Result;
+import com.example.service.MinioFileService;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,28 +27,22 @@ public class FileController {
 
     private static final String filePath = System.getProperty("user.dir") + "/files/";
 
-    @Value("${fileBaseUrl:}")
-    private String fileBaseUrl;
+    @Resource
+    private MinioFileService minioFileService;
 
     /**
      * 文件上传
      */
     @PostMapping("/upload")
     public Result upload(MultipartFile file) {
-        String fileName = file.getOriginalFilename();
         try {
-            if (!FileUtil.isDirectory(filePath)) {
-                FileUtil.mkdir(filePath);
-            }
-            fileName = System.currentTimeMillis() + "-" + fileName;
-            String realFilePath = filePath + fileName;
-            // 文件存储形式：时间戳-文件名
-            FileUtil.writeBytes(file.getBytes(), realFilePath);
+            String url = minioFileService.upload(file, "common");
+            return Result.success(url);
         } catch (Exception e) {
+            String fileName = file == null ? "unknown" : file.getOriginalFilename();
             log.error(fileName + "--文件上传失败", e);
+            return Result.error("文件上传失败");
         }
-        String url = fileBaseUrl + "/files/download/" + fileName;
-        return Result.success(url);
     }
 
     /**
@@ -76,21 +71,16 @@ public class FileController {
      */
     @PostMapping("/wang/upload")
     public Map<String, Object> wangEditorUpload(MultipartFile file) {
-        String flag = System.currentTimeMillis() + "";
-        String fileName = file.getOriginalFilename();
+        String url = "";
         try {
-            // 文件存储形式：时间戳-文件名
-            FileUtil.writeBytes(file.getBytes(), filePath + flag + "-" + fileName);
-            System.out.println(fileName + "--上传成功");
-            Thread.sleep(1L);
+            url = minioFileService.upload(file, "editor");
         } catch (Exception e) {
-            System.err.println(fileName + "--文件上传失败");
+            String fileName = file == null ? "unknown" : file.getOriginalFilename();
+            log.error(fileName + "--文件上传失败", e);
         }
-        String http = fileBaseUrl + "/files/download/";
         Map<String, Object> resMap = new HashMap<>();
-        // wangEditor上传图片成功后， 需要返回的参数
         resMap.put("errno", 0);
-        resMap.put("data", CollUtil.newArrayList(Dict.create().set("url", http + flag + "-" + fileName)));
+        resMap.put("data", CollUtil.newArrayList(Dict.create().set("url", url)));
         return resMap;
     }
 }
