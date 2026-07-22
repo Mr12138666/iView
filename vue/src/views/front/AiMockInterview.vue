@@ -300,7 +300,7 @@
 
 <script setup>
 import { ref, onUnmounted, nextTick, watch } from 'vue'
-import { onBeforeRouteLeave } from 'vue-router'
+import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import request from '@/utils/request.js'
 import InterviewSetup from '@/components/InterviewSetup.vue'
 
