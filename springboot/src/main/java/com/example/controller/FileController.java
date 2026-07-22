@@ -35,8 +35,17 @@ public class FileController {
      */
     @PostMapping("/upload")
     public Result upload(MultipartFile file) {
+        return uploadToMinio(file, "common");
+    }
+
+    @PostMapping("/upload/advertise")
+    public Result uploadAdvertise(MultipartFile file) {
+        return uploadToMinio(file, "advertise");
+    }
+
+    private Result uploadToMinio(MultipartFile file, String directory) {
         try {
-            String url = minioFileService.upload(file, "common");
+            String url = minioFileService.upload(file, directory);
             return Result.success(url);
         } catch (Exception e) {
             String fileName = file == null ? "unknown" : file.getOriginalFilename();

@@ -41,11 +41,25 @@ const router = createRouter({
       ]
     },
     { path: '/login', component: () => import('@/views/Login.vue') },
+    { path: '/admin/login', component: () => import('@/views/AdminLogin.vue') },
     { path: '/register', component: () => import('@/views/Register.vue') },
     { path: '/404', component: () => import('@/views/404.vue') },
     { path: '/resumeView', component: () => import('@/views/ResumeView.vue') },
     { path: '/:pathMatch(.*)', redirect: '/404' }
   ]
+})
+
+router.beforeEach((to) => {
+  if (!to.path.startsWith('/manager')) return true
+
+  const user = JSON.parse(localStorage.getItem('xm-user') || '{}')
+  if (!user.id) {
+    return '/admin/login'
+  }
+  if (user.role !== 'ADMIN') {
+    return user.role === 'USER' ? '/front/home' : '/login'
+  }
+  return true
 })
 
 export default router

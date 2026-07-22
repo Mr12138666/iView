@@ -49,7 +49,7 @@
       <el-form ref="form" :model="data.form" label-width="75px" style="padding: 20px">
         <el-form-item prop="img" label="广告主图">
           <el-upload
-              :action="baseUrl + '/files/upload'"
+              :action="baseUrl + '/files/upload/advertise'"
               :on-success="handleFileUpload"
               list-type="picture"
               >

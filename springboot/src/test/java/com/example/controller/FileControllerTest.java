@@ -30,6 +30,20 @@ class FileControllerTest {
     }
 
     @Test
+    void uploadAdvertiseReturnsMinioPublicUrl() throws Exception {
+        FileController controller = new FileController();
+        MinioFileService fileService = mock(MinioFileService.class);
+        MockMultipartFile file = new MockMultipartFile("file", "banner.png", "image/png", new byte[]{1});
+        when(fileService.upload(file, "advertise")).thenReturn("http://120.53.242.78:19000/job-assets/advertise/banner.png");
+        ReflectionTestUtils.setField(controller, "minioFileService", fileService);
+
+        Result result = controller.uploadAdvertise(file);
+
+        assertThat(result.getCode()).isEqualTo("200");
+        assertThat(result.getData()).isEqualTo("http://120.53.242.78:19000/job-assets/advertise/banner.png");
+    }
+
+    @Test
     void wangEditorUploadReturnsMinioPublicUrlPayload() throws Exception {
         FileController controller = new FileController();
         MinioFileService fileService = mock(MinioFileService.class);

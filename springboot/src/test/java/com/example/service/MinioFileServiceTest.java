@@ -4,6 +4,7 @@ import com.example.common.config.MinioProperties;
 import io.minio.BucketExistsArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.SetBucketPolicyArgs;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.mock.web.MockMultipartFile;
@@ -31,9 +32,12 @@ class MinioFileServiceTest {
 
         ArgumentCaptor<PutObjectArgs> captor = ArgumentCaptor.forClass(PutObjectArgs.class);
         verify(minioClient).putObject(captor.capture());
+        ArgumentCaptor<SetBucketPolicyArgs> policyCaptor = ArgumentCaptor.forClass(SetBucketPolicyArgs.class);
+        verify(minioClient).setBucketPolicy(policyCaptor.capture());
         PutObjectArgs args = captor.getValue();
         assertThat(args.bucket()).isEqualTo("job-assets");
         assertThat(args.object()).startsWith("avatar/").endsWith("avatar.png");
+        assertThat(policyCaptor.getValue().bucket()).isEqualTo("job-assets");
         assertThat(url).isEqualTo("http://120.53.242.78:19000/job-assets/" + args.object());
     }
 

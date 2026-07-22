@@ -6,6 +6,7 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.SetBucketPolicyArgs;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,7 +24,7 @@ public class MinioFileService {
     }
 
     public String upload(MultipartFile file, String directory) throws Exception {
-        ensureBucketExists();
+        ensureBucketReady();
         String objectName = buildObjectName(file.getOriginalFilename(), directory);
         minioClient.putObject(PutObjectArgs.builder()
                 .bucket(properties.getBucket())
@@ -34,7 +35,7 @@ public class MinioFileService {
         return buildPublicUrl(objectName);
     }
 
-    private void ensureBucketExists() throws Exception {
+    private void ensureBucketReady() throws Exception {
         boolean exists = minioClient.bucketExists(BucketExistsArgs.builder()
                 .bucket(properties.getBucket())
                 .build());
@@ -43,6 +44,10 @@ public class MinioFileService {
                     .bucket(properties.getBucket())
                     .build());
         }
+        minioClient.setBucketPolicy(SetBucketPolicyArgs.builder()
+                .bucket(properties.getBucket())
+                .config(buildPublicReadPolicy())
+                .build());
     }
 
     private String buildObjectName(String originalFilename, String directory) {
@@ -56,5 +61,21 @@ public class MinioFileService {
 
     private String buildPublicUrl(String objectName) {
         return properties.getPublicUrl().replaceAll("/+$", "") + "/" + objectName;
+    }
+
+    private String buildPublicReadPolicy() {
+        return """
+                {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {"AWS": ["*"]},
+                      "Action": ["s3:GetObject"],
+                      "Resource": ["arn:aws:s3:::%s/*"]
+                    }
+                  ]
+                }
+                """.formatted(properties.getBucket());
     }
 }

@@ -82,7 +82,7 @@ const data = reactive({
 
 const logout = () => {
   localStorage.removeItem('xm-user')
-  router.push('/login')
+  router.push('/admin/login')
 }
 
 const updateUser = () => {
