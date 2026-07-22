@@ -55,7 +55,7 @@
 >
 > ✅ **完整功能**: 包含语音识别、智能对话、实时反馈、面试总结等全套功能
 >
-> 🚀 **立即体验**: 克隆项目并按照配置指南设置API密钥即可开始使用
+> 🚀 **立即体验**: 克隆项目并在后端 `.env` 中配置 AI 服务凭据即可开始使用
 
 ---
 
@@ -212,11 +212,11 @@ IntelliView-Future/
 
 2. **配置数据库** (参见下方数据库配置章节)
 
-3. **配置AI服务** (必需)
+3. **配置AI服务和数据库** (必需)
    ```bash
-   # 编辑前端AI配置文件
-   vim vue/src/views/AiMockInterview.vue
-   # 填入您的讯飞API密钥
+   cd springboot
+   cp .env.example .env
+   # 编辑 .env，填写数据库和讯飞 API 配置
    ```
 
 4. **启动后端**
@@ -423,40 +423,47 @@ npm run dev
 
 ### 🔑 AI服务配置 (必需配置)
 
-**AI模拟面试功能需要在前端配置讯飞API密钥**，编辑 `vue/src/views/AiMockInterview.vue` 文件：
+讯飞星火对话和 TTS 都由 Spring Boot 后端代理，前端不保存 `APPID`、`APIKey`、`APISecret` 或 `APIPassword`。请复制后端环境变量模板并填写配置：
 
-```javascript
-// 在 AiMockInterview.vue 中配置讯飞API
-export default {
-  data() {
-    return {
-      // 讯飞星火大模型配置
-      sparkConfig: {
-        appId: 'your_app_id',          // 替换为您的APPID
-        apiSecret: 'your_api_secret',   // 替换为您的APISecret  
-        apiKey: 'your_api_key',        // 替换为您的APIKey
-        url: 'wss://spark-api.xf-yun.com/v3.5/chat'
-      },
-      
-      // 讯飞语音合成配置
-      ttsConfig: {
-        appId: 'your_tts_app_id',      // TTS服务的APPID
-        apiKey: 'your_tts_api_key',    // TTS服务的APIKey
-        apiSecret: 'your_tts_api_secret', // TTS服务的APISecret
-        url: 'https://tts-api.xfyun.cn/v2/tts'
-      }
-    }
-  }
-}
+```bash
+cd springboot
+cp .env.example .env
 ```
 
-> **获取API密钥**:
+编辑 `springboot/.env`：
+
+```dotenv
+# 数据库
+DB_USERNAME=root
+DB_PASSWORD=your_database_password
+DB_URL=jdbc:mysql://localhost:3306/xm_job?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2b8&allowPublicKeyRetrieval=true
+
+# 讯飞星火大模型
+XFYUN_SPARK_HOST_URL=https://spark-api-open.xf-yun.com/x2/chat/completions
+XFYUN_SPARK_API_PASSWORD=your_spark_api_password
+XFYUN_SPARK_MODEL=spark-x
+XFYUN_SPARK_WS_URL=wss://spark-api.xf-yun.com/v3.5/chat
+XFYUN_SPARK_DOMAIN=generalv3.5
+
+# 讯飞 TTS
+XFYUN_TTS_APP_ID=your_app_id
+XFYUN_TTS_API_KEY=your_tts_api_key
+XFYUN_TTS_API_SECRET=your_tts_api_secret
+XFYUN_TTS_WS_URL=wss://tts-api.xfyun.cn/v2/tts
+```
+
+前端只通过以下后端接口使用 AI 能力：
+
+- `POST /api/spark/chat`：星火大模型对话
+- `POST /api/spark/tts`：讯飞语音合成
+
+请勿将 `springboot/.env` 提交到公开仓库。讯飞凭据应只保存在后端运行环境，前端无需修改 `vue/src/views/front/AiMockInterview.vue`。
+
+> **获取讯飞凭据**:
 > 1. 访问 [讯飞开放平台](https://www.xfyun.cn/)
-> 2. 注册账号并实名认证
-> 3. 创建应用，分别开通"星火认知大模型V3.5"和"语音合成"服务
-> 4. 获取对应的APPID、APIKey、APISecret配置到前端组件中
->
-> **注意**: 请勿将API密钥提交到公开仓库，建议使用环境变量或配置文件管理
+> 2. 注册账号并完成实名认证
+> 3. 创建应用并开通星火大模型和语音合成服务
+> 4. 将获得的凭据填写到 `springboot/.env`，不要写入前端代码
 
 ## 📚 API文档
 
