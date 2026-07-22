@@ -299,7 +299,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, nextTick, computed, watch } from 'vue'
+import { ref, onUnmounted, nextTick, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import request from '@/utils/request.js'
 import InterviewSetup from '@/components/InterviewSetup.vue'
@@ -321,7 +321,6 @@ const isSpeaking = ref(false)
 const currentText = ref('')
 const speechFinalBuffer = ref('')
 const isInitialized = ref(false)
-const cryptoJSLoaded = ref(false)
 
 // 闈㈣瘯鐘舵€?
 const interviewStarted = ref(false)
@@ -435,15 +434,6 @@ const handleInterviewStart = async (config) => {
     conversationHistory.value = []
     currentContext.value = ''
     resetSpeechTranscript()
-
-    // 等待 CryptoJS 加载（参考项目做法）
-    if (!cryptoJSLoaded.value) {
-      processingMessage.value = '正在加载必要组件...'
-      await new Promise((resolve) => {
-        const check = () => { if (cryptoJSLoaded.value) resolve(); else setTimeout(check, 100) }
-        check()
-      })
-    }
 
     processingMessage.value = '正在创建面试会话...'
 
@@ -874,106 +864,17 @@ const cleanupResources = async () => {
   console.log("Resources cleaned up.");
 };
 
-// ==================== 讯飞 API 配置 ====================
-// Spark 大模型走后端代理 /api/spark/chat，前端不需要存鉴权信息
-// TTS 仍走 WebSocket 直连，需要 appId/apiKey/apiSecret 做 HMAC-SHA256 签名
-const XFYUN_CONFIG = {
-  appId: '4a2ba9d5',
-  apiKey: 'f5364f4dd6fadf1d75763b5a2f8f32c5',
-  apiSecret: 'MGE0MWY1MTkxMmM4Nzc5NjcxNTRkODQx',
-  ttsWsUrl: 'wss://tts-api.xfyun.cn/v2/tts'
-};
-
-// ==================== 讯飞鉴权 URL 生成 (CryptoJS) ====================
-const createTTSAuthUrl = () => {
-  if (typeof CryptoJS === 'undefined') throw new Error('CryptoJS not loaded')
-  const { apiKey, apiSecret } = XFYUN_CONFIG
-  const url = new URL(XFYUN_CONFIG.ttsWsUrl)
-  const host = url.host
-  const path = url.pathname + url.search
-  const date = new Date().toUTCString()
-  const signatureOrigin = `host: ${host}\ndate: ${date}\nGET ${path} HTTP/1.1`
-  const signatureSha = CryptoJS.HmacSHA256(signatureOrigin, apiSecret)
-  const signature = CryptoJS.enc.Base64.stringify(signatureSha)
-  const authorizationOrigin = `api_key="${apiKey}", algorithm="hmac-sha256", headers="host date request-line", signature="${signature}"`
-  const authorization = btoa(authorizationOrigin)
-  return `${XFYUN_CONFIG.ttsWsUrl}?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`
-}
-
-// ==================== 讯飞 TTS 语音合成 (公共API v2 + CryptoJS鉴权) ====================
-const synthesizeWithXFYun = (text) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const authUrl = createTTSAuthUrl()
-      const ws = new WebSocket(authUrl)
-      let decodedChunks = []
-      let isCompleted = false
-
-      ws.onopen = () => {
-        console.log('讯飞TTS连接已建立')
-        // 公共API v2格式: common/business/data
-        const requestData = {
-          common: { app_id: XFYUN_CONFIG.appId },
-          business: {
-            aue: 'lame', sfl: 1, auf: 'audio/L16;rate=16000',
-            vcn: 'x4_yezi', speed: 50, volume: 50, pitch: 50,
-            bgs: 0, reg: '0', rdn: '0', rhy: '0', tte: 'UTF8'
-          },
-          data: {
-            status: 2,
-            text: btoa(unescape(encodeURIComponent(text)))
-          }
-        }
-        console.log('TTS请求:', JSON.stringify(requestData).substring(0, 200))
-        ws.send(JSON.stringify(requestData))
-      }
-
-      ws.onmessage = (event) => {
-        try {
-          const response = JSON.parse(event.data)
-          console.log('TTS响应 code:', response.code, 'status:', response.data?.status, 'audio长度:', response.data?.audio?.length)
-          // 公共API v2格式: code / data.audio / data.status
-          if (response.code !== 0) {
-            reject(new Error(`TTS错误(${response.code}): ${response.message || '未知'}`))
-            if (ws.readyState === WebSocket.OPEN) ws.close()
-            return
-          }
-          if (response.data?.audio) {
-            const chunk = response.data.audio
-            const status = response.data.status
-            if (chunk && chunk.length > 0) {
-              try { decodedChunks.push(atob(chunk)) } catch (e) { console.warn('TTS单块解码失败:', e.message) }
-            }
-            if (status === 2) {
-              isCompleted = true
-              console.log('TTS完成, 解码块数:', decodedChunks.length)
-              if (decodedChunks.length === 0) { reject(new Error('未收到有效音频数据')); return }
-              const bin = decodedChunks.join('')
-              const arr = new Uint8Array(bin.length)
-              for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i)
-              resolve(new Blob([arr.buffer], { type: 'audio/mpeg' }))
-              if (ws.readyState === WebSocket.OPEN) ws.close()
-            }
-          }
-        } catch (e) {
-          reject(new Error(`TTS响应解析失败: ${e.message}`))
-          if (ws.readyState === WebSocket.OPEN && !isCompleted) ws.close()
-        }
-      }
-
-      ws.onerror = () => reject(new Error('TTS连接错误'))
-      ws.onclose = (e) => {
-        console.log('TTS连接关闭, code:', e.code, 'completed:', isCompleted, 'chunks:', decodedChunks.length)
-        if (!isCompleted && e.code !== 1000) {
-          reject(new Error(`TTS连接意外关闭: ${e.code}`))
-        } else if (!isCompleted && decodedChunks.length === 0 && e.code === 1000) {
-          reject(new Error('TTS连接关闭但未收到音频数据'))
-        }
-      }
-    } catch (e) {
-      reject(new Error(`TTS初始化失败: ${e.message}`))
-    }
-  })
+// 讯飞密钥只保存在后端，前端通过受保护的代理接口获取音频。
+const synthesizeWithXFYun = async (text) => {
+  const audioBlob = await request.post(
+    '/api/spark/tts',
+    { text: text.trim() },
+    { responseType: 'blob', timeout: 30000 }
+  )
+  if (!(audioBlob instanceof Blob) || audioBlob.size === 0) {
+    throw new Error('TTS未返回有效音频')
+  }
+  return audioBlob
 }
 
 // ==================== 讯飞星火 AI 对话 (后端代理，避免CORS) ====================
@@ -1152,27 +1053,6 @@ const closeVoiceChat = async () => {
   await cleanupResources();
   emit('close');
 };
-
-// ==================== 生命周期 ====================
-onMounted(async () => {
-  if (typeof CryptoJS === 'undefined') {
-    console.log('CryptoJS未加载，从CDN加载中...')
-    const script = document.createElement('script')
-    script.src = 'https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js'
-    script.onload = () => { console.log('CryptoJS加载成功'); cryptoJSLoaded.value = true }
-    script.onerror = () => {
-      console.error('CryptoJS主CDN加载失败，尝试备用...')
-      const fb = document.createElement('script')
-      fb.src = 'https://unpkg.com/crypto-js@4.1.1/crypto-js.js'
-      fb.onload = () => { console.log('CryptoJS备用CDN加载成功'); cryptoJSLoaded.value = true }
-      fb.onerror = () => { console.error('CryptoJS所有CDN加载失败'); alert('组件初始化失败，请刷新页面重试') }
-      document.head.appendChild(fb)
-    }
-    document.head.appendChild(script)
-  } else {
-    cryptoJSLoaded.value = true
-  }
-})
 
 onBeforeRouteLeave((to, from, next) => {
   if (interviewStarted.value) {

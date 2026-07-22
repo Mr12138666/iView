@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneOffset;
@@ -157,8 +158,15 @@ public class SparkTtsService {
     }
 
     private String createAuthUrl() throws Exception {
-        String host = new java.net.URL(config.getTtsWsUrl()).getHost();
-        String path = new java.net.URL(config.getTtsWsUrl()).getPath();
+        URI uri = URI.create(config.getTtsWsUrl());
+        String host = uri.getHost();
+        String path = uri.getRawPath();
+        if (path == null || path.isBlank()) {
+            path = "/";
+        }
+        if (uri.getRawQuery() != null && !uri.getRawQuery().isBlank()) {
+            path += "?" + uri.getRawQuery();
+        }
         String date = DateTimeFormatter.RFC_1123_DATE_TIME
                 .withLocale(Locale.US)
                 .format(ZonedDateTime.now(ZoneOffset.UTC));
