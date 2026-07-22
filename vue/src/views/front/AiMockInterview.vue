@@ -7,110 +7,234 @@
       <div class="gradient-orb orb-3"></div>
     </div>
 
-    <!-- 闈㈣瘯璁剧疆闃舵 -->
     <InterviewSetup
         v-if="!interviewStarted"
         :is-starting="isInitializing"
         @start-interview="handleInterviewStart"
     />
 
-    <!-- 涓昏闈㈣瘯鐣岄潰 -->
-    <div v-else class="interview-main">
-      <!-- 闈㈣瘯澶撮儴淇℃伅 -->
-      <div class="interview-header">
-        <div class="interview-info">
-          <h2 class="interview-title">{{ interviewConfig.typeInfo?.name }}</h2>
-          <div class="interview-meta">
-            <span class="meta-item">
-              <svg viewBox="0 0 24 24" class="meta-icon">
-                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
-              </svg>
-              {{ formatTime(elapsedTime) }}
-            </span>
-            <span class="meta-item">
-              <svg viewBox="0 0 24 24" class="meta-icon">
-                <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3V2h-2v2H8V2H6v2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H3V9h14v11z"/>
-              </svg>
-              第{{ Math.floor(conversationHistory.length / 2) + 1 }}轮
-            </span>
-            <span class="meta-item difficulty-badge" :class="interviewConfig.difficulty">
-              {{ interviewConfig.difficultyInfo?.name }}
-            </span>
-          </div>
-        </div>
-        <button class="minimize-btn" @click="showSettings = !showSettings">
-          <svg viewBox="0 0 24 24" class="icon">
-            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-          </svg>
-        </button>
-      </div>
-
-      <!-- AI闈㈣瘯瀹樺ご鍍忓尯鍩?-->
-      <div class="interviewer-avatar">
-        <div class="avatar-container">
-          <div
-              ref="centerOrbRef"
-              class="avatar-orb"
-              :class="{
-                speaking: isSpeaking,
-                listening: isMicEnabled && !isProcessing,
-                thinking: isProcessing
-              }"
-          >
-            <div class="avatar-core">
-              <div class="ai-brain">
-                <svg viewBox="0 0 24 24" class="brain-icon">
-                  <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.5C10.1 10.9 9.6 11.1 9 11.1S7.9 10.9 7.5 10.5L1.83 4.83L0.41 6.24L6.41 12.24C6.2 12.64 6 13.1 6 13.6C6 14.6 6.4 15.5 7 16.2V19C7 20.1 7.9 21 9 21H15C16.1 21 17 20.1 17 19V16.2C17.6 15.5 18 14.6 18 13.6C18 13.1 17.8 12.64 17.59 12.24L21 9Z"/>
+    <div v-else class="interview-shell">
+      <div class="interview-main">
+        <div class="interview-header">
+          <div class="interview-info">
+            <h2 class="interview-title">{{ interviewConfig.typeInfo?.name }}</h2>
+            <div class="interview-meta">
+              <span class="meta-item">
+                <svg viewBox="0 0 24 24" class="meta-icon">
+                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
                 </svg>
-              </div>
-              <div class="avatar-glow"></div>
+                {{ formatTime(elapsedTime) }}
+              </span>
+              <span class="meta-item">
+                <svg viewBox="0 0 24 24" class="meta-icon">
+                  <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3V2h-2v2H8V2H6v2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H3V9h14v11z"/>
+                </svg>
+                第{{ Math.floor(conversationHistory.length / 2) + 1 }}轮
+              </span>
+              <span class="meta-item difficulty-badge" :class="interviewConfig.difficulty">
+                {{ interviewConfig.difficultyInfo?.name }}
+              </span>
             </div>
-            <div class="pulse-ring"></div>
-            <div class="status-indicator" :class="getStatusClass()"></div>
+          </div>
+          <button class="minimize-btn" @click="showSettings = !showSettings">
+            <svg viewBox="0 0 24 24" class="icon">
+              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="interviewer-avatar">
+          <div class="avatar-container">
+            <div
+                ref="centerOrbRef"
+                class="avatar-orb"
+                :class="{
+                  speaking: isSpeaking,
+                  listening: isMicEnabled && !isProcessing,
+                  thinking: isProcessing
+                }"
+            >
+              <div class="avatar-core">
+                <div class="ai-brain">
+                  <svg viewBox="0 0 24 24" class="brain-icon">
+                    <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.5C10.1 10.9 9.6 11.1 9 11.1S7.9 10.9 7.5 10.5L1.83 4.83L0.41 6.24L6.41 12.24C6.2 12.64 6 13.1 6 13.6C6 14.6 6.4 15.5 7 16.2V19C7 20.1 7.9 21 9 21H15C16.1 21 17 20.1 17 19V16.2C17.6 15.5 18 14.6 18 13.6C18 13.1 17.8 12.64 17.59 12.24L21 9Z"/>
+                  </svg>
+                </div>
+                <div class="avatar-glow"></div>
+              </div>
+              <div class="pulse-ring"></div>
+              <div class="status-indicator" :class="getStatusClass()"></div>
+            </div>
+          </div>
+
+          <div class="interviewer-info">
+            <h2 class="interviewer-name">AI面试官</h2>
+            <p class="interviewer-title">{{ interviewConfig.typeInfo?.description }}</p>
+            <div class="interview-status">
+              <div class="status-dot" :class="getStatusClass()"></div>
+              <span class="status-text">{{ getStatusText() }}</span>
+            </div>
           </div>
         </div>
 
-        <!-- AI闈㈣瘯瀹樹俊鎭?-->
-        <div class="interviewer-info">
-          <h2 class="interviewer-name">AI面试官</h2>
-          <p class="interviewer-title">{{ interviewConfig.typeInfo?.description }}</p>
-          <div class="interview-status">
-            <div class="status-dot" :class="getStatusClass()"></div>
-            <span class="status-text">{{ getStatusText() }}</span>
+        <div v-if="processingMessage" class="status-message-card">
+          <div class="message-content">
+            <div class="loading-dots" v-if="isProcessing">
+              <span></span><span></span><span></span>
+            </div>
+            <span class="message-text">{{ processingMessage }}</span>
+          </div>
+        </div>
+
+        <div class="interview-progress">
+          <div class="progress-item" :class="{ active: conversationHistory.length >= 0 }">
+            <div class="progress-dot"></div>
+            <span>开场</span>
+          </div>
+          <div class="progress-line" :class="{ active: conversationHistory.length >= 2 }"></div>
+          <div class="progress-item" :class="{ active: conversationHistory.length >= 2 }">
+            <div class="progress-dot"></div>
+            <span>展开</span>
+          </div>
+          <div class="progress-line" :class="{ active: conversationHistory.length >= 6 }"></div>
+          <div class="progress-item" :class="{ active: conversationHistory.length >= 6 }">
+            <div class="progress-dot"></div>
+            <span>深入</span>
+          </div>
+          <div class="progress-line" :class="{ active: conversationHistory.length >= 10 }"></div>
+          <div class="progress-item" :class="{ active: conversationHistory.length >= 10 }">
+            <div class="progress-dot"></div>
+            <span>总结</span>
+          </div>
+        </div>
+
+        <div v-if="interviewStarted" class="control-panel">
+          <div class="control-section">
+            <div class="mic-control">
+              <input
+                  type="checkbox"
+                  id="micToggle"
+                  :checked="!isMicEnabled"
+                  @change="toggleMicrophone"
+                  style="display: none;"
+              >
+              <label
+                  class="mic-button"
+                  :class="{
+                    'active': isMicEnabled,
+                    'disabled': isProcessing,
+                    'speaking': isSpeaking
+                  }"
+                  for="micToggle"
+              >
+                <div class="mic-icon">
+                  <svg v-if="isMicEnabled" viewBox="0 0 24 24" class="icon">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                  </svg>
+                  <svg v-else viewBox="0 0 24 24" class="icon">
+                    <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c.57-.08 1.12-.24 1.64-.46l2.36 2.36L21 15.73 4.27 3z"/>
+                  </svg>
+                </div>
+                <span class="mic-label">{{ isMicEnabled ? '点击静音' : '点击开始' }}</span>
+                <div class="mic-pulse" v-if="isMicEnabled && isSpeaking"></div>
+              </label>
+            </div>
+
+            <button
+                class="cancel-interview-btn"
+                @click="cancelInterview"
+                :disabled="isProcessing"
+            >
+              <svg viewBox="0 0 24 24" class="icon">
+                <path d="M18.3 5.71 12 12l6.3 6.29-1.41 1.41L10.59 13.41 4.29 19.71 2.88 18.3 9.17 12 2.88 5.7 4.29 4.29l6.3 6.3 6.3-6.3 1.41 1.42Z"/>
+              </svg>
+              <span>取消面试</span>
+            </button>
+            <button
+                class="end-interview-btn"
+                @click="endInterview"
+                :disabled="isProcessing"
+            >
+              <svg viewBox="0 0 24 24" class="icon">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+              </svg>
+              <span>结束面试</span>
+            </button>
+          </div>
+
+          <div class="interview-assistant">
+            <div class="assistant-tips">
+              <div class="tip-category">
+                <h4 class="tip-title">面试技巧</h4>
+                <div class="tips-grid">
+                  <div class="tip-item">
+                    <svg viewBox="0 0 24 24" class="tip-icon">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    <span>使用 STAR 法则回答</span>
+                  </div>
+                  <div class="tip-item">
+                    <svg viewBox="0 0 24 24" class="tip-icon">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>提供具体数据和案例</span>
+                  </div>
+                  <div class="tip-item">
+                    <svg viewBox="0 0 24 24" class="tip-icon">
+                      <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    <span>主动提问展示兴趣</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="current-stage-tip">
+                <h4 class="tip-title">当前阶段建议</h4>
+                <p class="stage-advice">{{ getCurrentStageAdvice() }}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 鐘舵€佹秷鎭尯鍩?-->
-      <div v-if="processingMessage" class="status-message-card">
-        <div class="message-content">
-          <div class="loading-dots" v-if="isProcessing">
-            <span></span><span></span><span></span>
+      <div class="conversation-panel">
+        <div class="conversation-panel-header">
+          <div>
+            <h3 class="conversation-panel-title">实时对话记录</h3>
+            <p class="conversation-panel-subtitle">按时间顺序记录双方发言，便于回看</p>
           </div>
-          <span class="message-text">{{ processingMessage }}</span>
+          <div class="conversation-panel-count">{{ conversationHistory.length }} 条</div>
         </div>
-      </div>
-
-      <!-- 闈㈣瘯杩涘害鎸囩ず -->
-      <div class="interview-progress">
-        <div class="progress-item" :class="{ active: conversationHistory.length >= 0 }">
-          <div class="progress-dot"></div>
-          <span>开场</span>
-        </div>
-        <div class="progress-line" :class="{ active: conversationHistory.length >= 2 }"></div>
-        <div class="progress-item" :class="{ active: conversationHistory.length >= 2 }">
-          <div class="progress-dot"></div>
-          <span>灞曞紑</span>
-        </div>
-        <div class="progress-line" :class="{ active: conversationHistory.length >= 6 }"></div>
-        <div class="progress-item" :class="{ active: conversationHistory.length >= 6 }">
-          <div class="progress-dot"></div>
-          <span>深入</span>
-        </div>
-        <div class="progress-line" :class="{ active: conversationHistory.length >= 10 }"></div>
-        <div class="progress-item" :class="{ active: conversationHistory.length >= 10 }">
-          <div class="progress-dot"></div>
-          <span>总结</span>
+        <div ref="conversationListRef" class="conversation-list">
+          <div
+              v-for="(message, index) in conversationHistory"
+              :key="`${message.timestamp || index}-${index}`"
+              class="conversation-item"
+              :class="message.role"
+          >
+            <div class="conversation-avatar">{{ message.role === 'assistant' ? 'AI' : '我' }}</div>
+            <div class="conversation-body">
+              <div class="conversation-meta">
+                <span class="conversation-role">{{ message.role === 'assistant' ? '面试官' : '你' }}</span>
+                <span class="conversation-time">{{ formatConversationTime(message.timestamp) }}</span>
+              </div>
+              <div class="conversation-text">{{ message.content }}</div>
+            </div>
+          </div>
+          <div v-if="!conversationHistory.length" class="conversation-empty">
+            面试开始后，这里会实时显示双方的语音转写和回复。
+          </div>
+          <div v-if="currentText && isMicEnabled && !isProcessing" class="conversation-item user live">
+            <div class="conversation-avatar">我</div>
+            <div class="conversation-body">
+              <div class="conversation-meta">
+                <span class="conversation-role">你 · 正在说</span>
+                <span class="conversation-time">实时转写</span>
+              </div>
+              <div class="conversation-text">{{ currentText }}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -122,100 +246,6 @@
         @ended="handlePlaybackEnd"
         style="display: none;"
     ></audio>
-
-    <!-- 鎺у埗闈㈡澘 -->
-    <div v-if="interviewStarted" class="control-panel">
-      <div class="control-section">
-        <!-- 楹﹀厠椋庢帶鍒?-->
-        <div class="mic-control">
-          <input
-              type="checkbox"
-              id="micToggle"
-              :checked="!isMicEnabled"
-              @change="toggleMicrophone"
-              style="display: none;"
-          >
-          <label
-              class="mic-button"
-              :class="{
-                'active': isMicEnabled,
-                'disabled': isProcessing,
-                'speaking': isSpeaking
-              }"
-              for="micToggle"
-          >
-            <div class="mic-icon">
-              <svg v-if="isMicEnabled" viewBox="0 0 24 24" class="icon">
-                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-              </svg>
-              <svg v-else viewBox="0 0 24 24" class="icon">
-                <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c.57-.08 1.12-.24 1.64-.46l2.36 2.36L21 15.73 4.27 3z"/>
-              </svg>
-            </div>
-            <span class="mic-label">{{ isMicEnabled ? '点击静音' : '点击开始' }}</span>
-            <div class="mic-pulse" v-if="isMicEnabled && isSpeaking"></div>
-          </label>
-        </div>
-
-        <!-- 缁撴潫闈㈣瘯鎸夐挳 -->
-        <button
-            class="cancel-interview-btn"
-            @click="cancelInterview"
-            :disabled="isProcessing"
-        >
-          <svg viewBox="0 0 24 24" class="icon">
-            <path d="M18.3 5.71 12 12l6.3 6.29-1.41 1.41L10.59 13.41 4.29 19.71 2.88 18.3 9.17 12 2.88 5.7 4.29 4.29l6.3 6.3 6.3-6.3 1.41 1.42Z"/>
-          </svg>
-          <span>取消面试</span>
-        </button>
-        <button
-            class="end-interview-btn"
-            @click="endInterview"
-            :disabled="isProcessing"
-        >
-          <svg viewBox="0 0 24 24" class="icon">
-            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-          </svg>
-          <span>结束面试</span>
-        </button>
-      </div>
-
-      <!-- 闈㈣瘯鍔╂墜鎻愮ず -->
-      <div class="interview-assistant">
-        <div class="assistant-tips">
-          <div class="tip-category">
-            <h4 class="tip-title">面试技巧</h4>
-            <div class="tips-grid">
-              <div class="tip-item">
-                <svg viewBox="0 0 24 24" class="tip-icon">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-                <span>使用 STAR 法则回答</span>
-              </div>
-              <div class="tip-item">
-                <svg viewBox="0 0 24 24" class="tip-icon">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span>提供具体数据和案例</span>
-              </div>
-              <div class="tip-item">
-                <svg viewBox="0 0 24 24" class="tip-icon">
-                  <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                <span>主动提问展示兴趣</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 褰撳墠闃舵寤鸿 -->
-          <div class="current-stage-tip">
-            <h4 class="tip-title">当前阶段建议</h4>
-            <p class="stage-advice">{{ getCurrentStageAdvice() }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- 闈㈣瘯鎬荤粨妯℃€佺獥鍙?-->
     <div v-if="showSummary" class="interview-summary-modal">
@@ -233,7 +263,7 @@
             </div>
             <div class="stat-item">
               <div class="stat-value">{{ Math.floor(conversationHistory.length / 2) }}</div>
-              <div class="stat-label">闂瓟杞</div>
+              <div class="stat-label">问答轮次</div>
             </div>
             <div class="stat-item">
               <div class="stat-value">{{ interviewConfig.typeInfo?.name }}</div>
@@ -260,7 +290,7 @@
             <svg viewBox="0 0 24 24" class="icon">
               <path d="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7z"/>
             </svg>
-            <span>杩斿洖涓婚〉</span>
+            <span>返回首页</span>
           </button>
         </div>
       </div>
@@ -269,7 +299,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onUnmounted, nextTick, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick, computed, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import request from '@/utils/request.js'
 import InterviewSetup from '@/components/InterviewSetup.vue'
@@ -289,7 +319,9 @@ const processingMessage = ref('')
 const isPlaying = ref(false)
 const isSpeaking = ref(false)
 const currentText = ref('')
+const speechFinalBuffer = ref('')
 const isInitialized = ref(false)
+const cryptoJSLoaded = ref(false)
 
 // 闈㈣瘯鐘舵€?
 const interviewStarted = ref(false)
@@ -318,6 +350,49 @@ let mediaStream = null
 const conversationHistory = ref([])
 const currentContext = ref('')
 const maxConversationTurns = 10
+const conversationListRef = ref(null)
+const speechSilenceDelay = 3500
+
+const formatConversationTime = (timestamp) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  return date.toLocaleTimeString('zh-CN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
+}
+
+const maxVisibleConversationEntries = 200
+
+const appendConversationEntry = (role, content) => {
+  conversationHistory.value.push({
+    role,
+    content,
+    timestamp: new Date().toISOString()
+  })
+
+  if (conversationHistory.value.length > maxVisibleConversationEntries) {
+    conversationHistory.value = conversationHistory.value.slice(-maxVisibleConversationEntries)
+  }
+
+  updateCurrentContext()
+}
+
+const resetSpeechTranscript = () => {
+  currentText.value = ''
+  speechFinalBuffer.value = ''
+}
+
+const scheduleSpeechProcessing = () => {
+  if (silenceTimer) {
+    clearTimeout(silenceTimer)
+  }
+  silenceTimer = setTimeout(() => {
+    handleSilence()
+  }, speechSilenceDelay)
+}
 
 // 宸ュ叿鍑芥暟
 const formatTime = (seconds) => {
@@ -359,6 +434,17 @@ const handleInterviewStart = async (config) => {
     interviewConfig.value = config
     conversationHistory.value = []
     currentContext.value = ''
+    resetSpeechTranscript()
+
+    // 等待 CryptoJS 加载（参考项目做法）
+    if (!cryptoJSLoaded.value) {
+      processingMessage.value = '正在加载必要组件...'
+      await new Promise((resolve) => {
+        const check = () => { if (cryptoJSLoaded.value) resolve(); else setTimeout(check, 100) }
+        check()
+      })
+    }
+
     processingMessage.value = '正在创建面试会话...'
 
     const createResponse = await request.post('/api/interview/session', {
@@ -374,25 +460,60 @@ const handleInterviewStart = async (config) => {
     interviewSessionId.value = createResponse.data.id
 
     processingMessage.value = '面试官正在准备第一道问题...'
-    const startResponse = await request.post(`/api/interview/session/${interviewSessionId.value}/start`)
+    console.time('/start 耗时')
+    let startResponse
+    try {
+      // 给 /start 单独设置 20 秒超时（AI 调用的请求会更久，但给出更友好的提示）
+      startResponse = await request.post(`/api/interview/session/${interviewSessionId.value}/start`, null, { timeout: 20000 })
+    } catch (startError) {
+      console.timeEnd('/start 耗时')
+      if (startError.code === 'ECONNABORTED') {
+        throw new Error('AI 服务响应超时，请检查后端控制台日志后重试')
+      }
+      throw startError
+    }
+    console.timeEnd('/start 耗时')
+    console.log('/start 响应:', startResponse.code, 'aiMessage 长度:', startResponse.data?.aiMessage?.length)
     if (startResponse.code !== '200' || !startResponse.data?.aiMessage) {
       throw new Error(startResponse.msg || '面试启动失败')
     }
+    const aiMessage = startResponse.data.aiMessage
 
+    // 3. 立即显示面试界面（不等语音初始化，避免 Chrome 用户激活过期导致 getUserMedia 挂起）
     interviewStarted.value = true
     interviewStartTime.value = Date.now()
     elapsedTime.value = 0
     interviewTimer = setInterval(() => {
       elapsedTime.value = Math.floor((Date.now() - interviewStartTime.value) / 1000)
     }, 1000)
+    isInitializing.value = false
 
-    await initializeVoiceChat()
-    await sendWelcomeMessage(startResponse.data.aiMessage)
+    // 4. TTS 合成欢迎语并播放
+    console.log('[TTS] 开始合成欢迎语...')
+    console.time('[TTS] 耗时')
+    const audioBlob = await synthesizeWithXFYun(aiMessage)
+    console.timeEnd('[TTS] 耗时')
+    console.log('[TTS] 音频大小:', audioBlob.size, 'bytes')
+    if (audioUrl.value) URL.revokeObjectURL(audioUrl.value)
+    audioUrl.value = URL.createObjectURL(audioBlob)
+    appendConversationEntry('assistant', aiMessage)
+    await nextTick()
+    if (audioPlayerRef.value) {
+      audioPlayerRef.value.load()
+      isPlaying.value = true  // 必须在 play() 前设置，防止 ended 事件竞态
+      await audioPlayerRef.value.play()
+      processingMessage.value = '面试官正在发言...'
+      console.log('[TTS] 音频播放中')
+    }
+
+    // 5. 不自动初始化语音（getUserMedia 需要用户手势）
+    console.log('[语音] 跳过自动初始化，等待用户手动开启麦克风')
+    isInitialized.value = true
+    processingMessage.value = '请点击麦克风按钮开始语音交互'
   } catch (error) {
     console.error('面试初始化失败', error)
-    alert('面试初始化失败，请重试')
+    alert(error.message || '面试初始化失败，请重试')
     interviewStarted.value = false
-  } finally {
     isInitializing.value = false
   }
 }
@@ -460,16 +581,20 @@ const sendWelcomeMessage = async (aiQuestion) => {
   try {
     processingMessage.value = '面试官正在准备开场...'
     isProcessing.value = true
+    console.log('[TTS] 开始合成:', welcomeText.substring(0, 50) + '...')
+    console.time('[TTS] 耗时')
     const audioBlob = await synthesizeWithXFYun(welcomeText)
+    console.timeEnd('[TTS] 耗时')
+    console.log('[TTS] 音频大小:', audioBlob.size, 'bytes')
     if (audioUrl.value) URL.revokeObjectURL(audioUrl.value)
     audioUrl.value = URL.createObjectURL(audioBlob)
     await nextTick()
     if (audioPlayerRef.value) {
       audioPlayerRef.value.load()
+      isPlaying.value = true  // 必须在 play() 前设置，防止 ended 事件竞态
       await audioPlayerRef.value.play()
-      isPlaying.value = true
     }
-    conversationHistory.value.push({ role: 'assistant', content: welcomeText })
+    appendConversationEntry('assistant', welcomeText)
   } catch (error) {
     console.error('发送欢迎消息失败', error)
     alert('初始化面试失败，请重试')
@@ -538,9 +663,15 @@ const processSpeech = async () => {
   }
 
   try {
+    const userAnswer = currentText.value.trim()
+    // 停止识别避免在处理期间捕获新语音
+    if (recognition) {
+      try { recognition.stop() } catch (e) { /* 可能已经停了 */ }
+    }
+    stopVolumeDetection()
+    resetSpeechTranscript()
     isProcessing.value = true
     processingMessage.value = '面试官正在分析你的回答...'
-    const userAnswer = currentText.value.trim()
     const typeInfo = interviewConfig.value.typeInfo || { name: '模拟面试', description: '' }
     const difficultyInfo = interviewConfig.value.difficultyInfo || { name: '', description: '' }
 
@@ -557,6 +688,8 @@ const processSpeech = async () => {
       { role: 'user', content: userAnswer }
     ]
 
+    appendConversationEntry('user', userAnswer)
+
     let replyText
     if (interviewSessionId.value) {
       const response = await request.post(
@@ -571,7 +704,7 @@ const processSpeech = async () => {
       replyText = await getSparkMaxReply(messages)
     }
 
-    updateConversationHistory(userAnswer, replyText)
+    appendConversationEntry('assistant', replyText)
     processingMessage.value = '正在合成面试官语音...'
     const audioBlob = await synthesizeWithXFYun(replyText)
     if (audioUrl.value) URL.revokeObjectURL(audioUrl.value)
@@ -579,19 +712,19 @@ const processSpeech = async () => {
     await nextTick()
     if (!audioPlayerRef.value) throw new Error('音频播放器不可用')
     audioPlayerRef.value.load()
+    isPlaying.value = true  // 必须在 play() 前设置，防止 ended 事件竞态
     await audioPlayerRef.value.play()
-    isPlaying.value = true
 
     emit('conversation-update', {
       userText: userAnswer,
       aiText: replyText,
       timestamp: new Date().toISOString()
     })
-    currentText.value = ''
+    resetSpeechTranscript()
   } catch (error) {
     console.error('处理回答失败', error)
     alert(`面试处理失败：${error.message || '未知错误'}`)
-    currentText.value = ''
+    resetSpeechTranscript()
   } finally {
     isProcessing.value = false
     processingMessage.value = isMicEnabled.value ? '面试官正在聆听你的回答' : '面试已暂停，点击开始继续'
@@ -600,16 +733,6 @@ const processSpeech = async () => {
     }
   }
 }
-
-const updateConversationHistory = (userText, aiText) => {
-  conversationHistory.value.push({ role: 'user', content: userText });
-  conversationHistory.value.push({ role: 'assistant', content: aiText });
-
-  if (conversationHistory.value.length > maxConversationTurns * 2) {
-    conversationHistory.value = conversationHistory.value.slice(-maxConversationTurns * 2);
-  }
-  updateCurrentContext();
-};
 
 const updateCurrentContext = () => {
   if (conversationHistory.value.length >= 2) {
@@ -639,24 +762,28 @@ const handleSpeechError = (event) => {
   isProcessing.value = false
   isSpeaking.value = false
   stopVolumeDetection()
+  resetSpeechTranscript()
   cleanupAudioResources()
 }
 
 const handleSpeechEnd = () => {
+  // continuous=true 模式下，onend 仅在主动停止或出错时触发，不需要自动重启
   isSpeaking.value = false
   if (isMicEnabled.value && !isProcessing.value && !isPlaying.value) {
-    setTimeout(async () => {
-      if (!isMicEnabled.value || isProcessing.value || isPlaying.value || !recognition) return
-      try {
-        recognition.start()
-      } catch (error) {
-        if (!error.message?.includes('already started')) {
-          await initializeVoiceChat()
-        }
-      }
-    }, 100)
+    processingMessage.value = '面试官正在聆听你的回答...'
   }
 }
+
+watch(
+  () => [conversationHistory.value.length, currentText.value],
+  async () => {
+    await nextTick()
+    const el = conversationListRef.value
+    if (el) {
+      el.scrollTop = el.scrollHeight
+    }
+  }
+)
 
 const handlePlaybackEnd = async () => {
   isPlaying.value = false
@@ -667,17 +794,14 @@ const handlePlaybackEnd = async () => {
   if (isMicEnabled.value && !isProcessing.value) {
     await restartRecording()
   } else {
-    processingMessage.value = isMicEnabled.value ? '面试官正在聆听你的回答' : '面试已暂停，点击开始继续'
+    processingMessage.value = isMicEnabled.value ? '面试官正在聆听你的回答' : '面试已暂停，点击麦克风继续'
   }
 }
 
 const restartRecording = async () => {
   if (!isMicEnabled.value || isProcessing.value) return
-  if (!recognition) {
-    await initializeVoiceChat()
-    return
-  }
   try {
+    if (!recognition) await initSpeechRecognition()
     if (!mediaStream || !audioContext || audioContext.state === 'closed') {
       await setupAudioAnalysis()
     }
@@ -686,8 +810,8 @@ const restartRecording = async () => {
     processingMessage.value = '面试官正在聆听你的回答'
   } catch (error) {
     if (!error.message?.includes('already started')) {
-      await cleanupAudioResources()
-      await initializeVoiceChat()
+      console.warn('[语音] 重启录音失败:', error)
+      processingMessage.value = '录音重启失败，请点击麦克风按钮重试'
     }
   }
 }
@@ -704,6 +828,7 @@ const cleanupAudioResources = async () => {
   analyser = null;
   volumeData = null;
   stopVolumeDetection();
+  resetSpeechTranscript();
 };
 
 const cleanupResources = async () => {
@@ -722,7 +847,7 @@ const cleanupResources = async () => {
     try {
       recognition.stop();
     } catch (error) {
-      console.log('鍋滄璇煶璇嗗埆鏃跺嚭閿?', error);
+      console.log('停止语音识别时出错', error);
     }
     recognition = null;
   }
@@ -749,10 +874,324 @@ const cleanupResources = async () => {
   console.log("Resources cleaned up.");
 };
 
+// ==================== 讯飞 API 配置 ====================
+// Spark 大模型走后端代理 /api/spark/chat，前端不需要存鉴权信息
+// TTS 仍走 WebSocket 直连，需要 appId/apiKey/apiSecret 做 HMAC-SHA256 签名
+const XFYUN_CONFIG = {
+  appId: '4a2ba9d5',
+  apiKey: 'f5364f4dd6fadf1d75763b5a2f8f32c5',
+  apiSecret: 'MGE0MWY1MTkxMmM4Nzc5NjcxNTRkODQx',
+  ttsWsUrl: 'wss://tts-api.xfyun.cn/v2/tts'
+};
+
+// ==================== 讯飞鉴权 URL 生成 (CryptoJS) ====================
+const createTTSAuthUrl = () => {
+  if (typeof CryptoJS === 'undefined') throw new Error('CryptoJS not loaded')
+  const { apiKey, apiSecret } = XFYUN_CONFIG
+  const url = new URL(XFYUN_CONFIG.ttsWsUrl)
+  const host = url.host
+  const path = url.pathname + url.search
+  const date = new Date().toUTCString()
+  const signatureOrigin = `host: ${host}\ndate: ${date}\nGET ${path} HTTP/1.1`
+  const signatureSha = CryptoJS.HmacSHA256(signatureOrigin, apiSecret)
+  const signature = CryptoJS.enc.Base64.stringify(signatureSha)
+  const authorizationOrigin = `api_key="${apiKey}", algorithm="hmac-sha256", headers="host date request-line", signature="${signature}"`
+  const authorization = btoa(authorizationOrigin)
+  return `${XFYUN_CONFIG.ttsWsUrl}?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`
+}
+
+// ==================== 讯飞 TTS 语音合成 (公共API v2 + CryptoJS鉴权) ====================
+const synthesizeWithXFYun = (text) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const authUrl = createTTSAuthUrl()
+      const ws = new WebSocket(authUrl)
+      let decodedChunks = []
+      let isCompleted = false
+
+      ws.onopen = () => {
+        console.log('讯飞TTS连接已建立')
+        // 公共API v2格式: common/business/data
+        const requestData = {
+          common: { app_id: XFYUN_CONFIG.appId },
+          business: {
+            aue: 'lame', sfl: 1, auf: 'audio/L16;rate=16000',
+            vcn: 'x4_yezi', speed: 50, volume: 50, pitch: 50,
+            bgs: 0, reg: '0', rdn: '0', rhy: '0', tte: 'UTF8'
+          },
+          data: {
+            status: 2,
+            text: btoa(unescape(encodeURIComponent(text)))
+          }
+        }
+        console.log('TTS请求:', JSON.stringify(requestData).substring(0, 200))
+        ws.send(JSON.stringify(requestData))
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const response = JSON.parse(event.data)
+          console.log('TTS响应 code:', response.code, 'status:', response.data?.status, 'audio长度:', response.data?.audio?.length)
+          // 公共API v2格式: code / data.audio / data.status
+          if (response.code !== 0) {
+            reject(new Error(`TTS错误(${response.code}): ${response.message || '未知'}`))
+            if (ws.readyState === WebSocket.OPEN) ws.close()
+            return
+          }
+          if (response.data?.audio) {
+            const chunk = response.data.audio
+            const status = response.data.status
+            if (chunk && chunk.length > 0) {
+              try { decodedChunks.push(atob(chunk)) } catch (e) { console.warn('TTS单块解码失败:', e.message) }
+            }
+            if (status === 2) {
+              isCompleted = true
+              console.log('TTS完成, 解码块数:', decodedChunks.length)
+              if (decodedChunks.length === 0) { reject(new Error('未收到有效音频数据')); return }
+              const bin = decodedChunks.join('')
+              const arr = new Uint8Array(bin.length)
+              for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i)
+              resolve(new Blob([arr.buffer], { type: 'audio/mpeg' }))
+              if (ws.readyState === WebSocket.OPEN) ws.close()
+            }
+          }
+        } catch (e) {
+          reject(new Error(`TTS响应解析失败: ${e.message}`))
+          if (ws.readyState === WebSocket.OPEN && !isCompleted) ws.close()
+        }
+      }
+
+      ws.onerror = () => reject(new Error('TTS连接错误'))
+      ws.onclose = (e) => {
+        console.log('TTS连接关闭, code:', e.code, 'completed:', isCompleted, 'chunks:', decodedChunks.length)
+        if (!isCompleted && e.code !== 1000) {
+          reject(new Error(`TTS连接意外关闭: ${e.code}`))
+        } else if (!isCompleted && decodedChunks.length === 0 && e.code === 1000) {
+          reject(new Error('TTS连接关闭但未收到音频数据'))
+        }
+      }
+    } catch (e) {
+      reject(new Error(`TTS初始化失败: ${e.message}`))
+    }
+  })
+}
+
+// ==================== 讯飞星火 AI 对话 (后端代理，避免CORS) ====================
+const getSparkMaxReply = async (chatMessages) => {
+  console.log('Spark X2 通过后端代理发送请求，消息数:', chatMessages.length)
+  const res = await request.post('/api/spark/chat', { messages: chatMessages })
+  if (res.code === '200') {
+    console.log('Spark X2 回复长度:', res.data?.length || 0)
+    return res.data
+  }
+  throw new Error(res.msg || 'AI 服务调用失败')
+}
+
+// ==================== 语音识别和音量检测 ====================
+const initSpeechRecognition = async () => {
+  if (recognition) return
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition
+    recognition = new SpeechRecognition()
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = 'zh-CN'
+    recognition.onstart = () => {
+      console.log('[语音] 语音识别已启动')
+      processingMessage.value = '面试官正在聆听你的回答...'
+    }
+    recognition.onend = handleSpeechEnd
+    recognition.onerror = handleSpeechError
+    recognition.onresult = handleSpeechResult
+  } else {
+    throw new Error('浏览器不支持语音识别')
+  }
+}
+
+const initializeVoiceChat = initSpeechRecognition
+
+const toggleMicrophone = async () => {
+  console.log('[语音] toggleMicrophone 被调用, 当前 isMicEnabled:', isMicEnabled.value)
+  if (isMicEnabled.value) {
+    await disableMicrophone()
+  } else {
+    await enableMicrophone()
+  }
+}
+
+const enableMicrophone = async () => {
+  if (isProcessing.value || isPlaying.value) {
+    console.log('[语音] 正在处理中，暂无法启用麦克风')
+    return
+  }
+  try {
+    console.log('[语音] enableMicrophone 开始...')
+    if (!recognition) await initSpeechRecognition()
+    if (!mediaStream || !audioContext || audioContext.state === 'closed') {
+      console.log('[语音] 请求麦克风权限...')
+      await setupAudioAnalysis()
+      console.log('[语音] 麦克风权限已获取')
+    }
+    if (recognition) {
+      recognition.start()
+      isMicEnabled.value = true
+      processingMessage.value = '面试官正在聆听你的回答...'
+      startVolumeDetection()
+      console.log('[语音] 麦克风已启用')
+    } else {
+      alert('语音识别未能初始化')
+    }
+  } catch (error) {
+    console.error('[语音] 启用麦克风失败:', error)
+    alert('启用麦克风失败: ' + error.message)
+  }
+}
+
+const disableMicrophone = async () => {
+  try {
+    if (recognition) recognition.stop()
+    await cleanupAudioResources()
+    isMicEnabled.value = false
+    processingMessage.value = '面试已暂停，点击麦克风继续'
+    stopVolumeDetection()
+    isSpeaking.value = false
+  } catch (error) {
+    console.error('[语音] 关闭麦克风失败:', error)
+  }
+}
+
+const setupAudioAnalysis = async () => {
+  await cleanupAudioResources()
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    mediaStream = stream
+    audioContext = new (window.AudioContext || window.webkitAudioContext)()
+    const source = audioContext.createMediaStreamSource(stream)
+    analyser = audioContext.createAnalyser()
+    analyser.fftSize = 256
+    volumeData = new Uint8Array(analyser.frequencyBinCount)
+    source.connect(analyser)
+    console.log('[语音] 音频分析管线已就绪')
+  } catch (error) {
+    console.error('[语音] 音频分析器设置失败:', error)
+    throw error
+  }
+}
+
+const handleSilence = () => {
+  silenceTimer = null
+  isSpeaking.value = false
+  if (currentText.value && !isProcessing.value) {
+    console.log('[语音] 检测到静音，处理已有文本:', currentText.value)
+    processSpeech()
+  } else {
+    console.log('[语音] 静音检测，但无最终文本或正在处理中')
+  }
+}
+
+const handleSpeechResult = (event) => {
+  let interimTranscript = ''
+  for (let i = event.resultIndex; i < event.results.length; i++) {
+    const result = event.results[i]
+    const transcript = result[0]?.transcript || ''
+    if (result.isFinal) {
+      speechFinalBuffer.value += transcript
+    } else {
+      interimTranscript += transcript
+    }
+  }
+
+  const liveTranscript = `${speechFinalBuffer.value} ${interimTranscript}`.replace(/\s+/g, ' ').trim()
+  currentText.value = liveTranscript
+  isSpeaking.value = Boolean(liveTranscript)
+
+  if (liveTranscript) {
+    scheduleSpeechProcessing()
+  }
+}
+
+const startVolumeDetection = () => {
+  if (!animationFrame) {
+    updateVolume()
+  }
+}
+
+const stopVolumeDetection = () => {
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame)
+    animationFrame = null
+  }
+}
+
+const updateVolume = () => {
+  if (!analyser || !isMicEnabled.value || !audioContext || audioContext.state === 'closed') {
+    isSpeaking.value = false
+    return
+  }
+  analyser.getByteFrequencyData(volumeData)
+  const average = volumeData.reduce((a, b) => a + b, 0) / volumeData.length
+  if (average > 20) {
+    isSpeaking.value = true
+    if (silenceTimer) {
+      clearTimeout(silenceTimer)
+      silenceTimer = null
+    }
+  } else if (isSpeaking.value) {
+    if (!silenceTimer) {
+      silenceTimer = setTimeout(() => {
+        handleSilence()
+      }, speechSilenceDelay)
+    }
+  }
+  if (isMicEnabled.value) {
+    animationFrame = requestAnimationFrame(updateVolume)
+  }
+}
+
 const closeVoiceChat = async () => {
   await cleanupResources();
   emit('close');
 };
+
+// ==================== 生命周期 ====================
+onMounted(async () => {
+  if (typeof CryptoJS === 'undefined') {
+    console.log('CryptoJS未加载，从CDN加载中...')
+    const script = document.createElement('script')
+    script.src = 'https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js'
+    script.onload = () => { console.log('CryptoJS加载成功'); cryptoJSLoaded.value = true }
+    script.onerror = () => {
+      console.error('CryptoJS主CDN加载失败，尝试备用...')
+      const fb = document.createElement('script')
+      fb.src = 'https://unpkg.com/crypto-js@4.1.1/crypto-js.js'
+      fb.onload = () => { console.log('CryptoJS备用CDN加载成功'); cryptoJSLoaded.value = true }
+      fb.onerror = () => { console.error('CryptoJS所有CDN加载失败'); alert('组件初始化失败，请刷新页面重试') }
+      document.head.appendChild(fb)
+    }
+    document.head.appendChild(script)
+  } else {
+    cryptoJSLoaded.value = true
+  }
+})
+
+onBeforeRouteLeave((to, from, next) => {
+  if (interviewStarted.value) {
+    if (!confirm('面试正在进行中，离开将丢失当前进度。确定离开吗？')) {
+      next(false)
+      return
+    }
+  }
+  cleanupResources()
+  next()
+})
+
+onUnmounted(() => {
+  cleanupResources()
+  if (interviewTimer) {
+    clearInterval(interviewTimer)
+    interviewTimer = null
+  }
+})
 
 </script>
 
@@ -1236,7 +1675,6 @@ const closeVoiceChat = async () => {
 .mic-button.disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  pointer-events: none;
 }
 
 .mic-icon {
@@ -1721,9 +2159,44 @@ const closeVoiceChat = async () => {
   display: none;
 }
 
+.interview-shell {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.8fr);
+  gap: 24px;
+  width: min(1440px, calc(100vw - 48px));
+  height: calc(100dvh - 24px);
+  min-height: 0;
+  padding: 24px 0 18px;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
 .interview-main {
-  max-width: 760px;
-  padding: 28px;
+  min-height: 0;
+  max-width: none;
+  padding: 0 6px 20px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  justify-content: flex-start;
+  align-items: stretch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(103, 232, 249, 0.55) rgba(15, 23, 42, 0.3);
+}
+
+.interview-main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.interview-main::-webkit-scrollbar-thumb {
+  background: rgba(103, 232, 249, 0.55);
+  border-radius: 999px;
+}
+
+.interview-main::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
 }
 
 .interview-header,
@@ -1738,8 +2211,202 @@ const closeVoiceChat = async () => {
 }
 
 .interview-header {
-  max-width: 760px;
+  max-width: none;
+  flex: 0 0 auto;
   border-radius: 8px;
+}
+
+.interviewer-avatar {
+  flex: 0 0 auto;
+  margin: 24px auto 20px;
+}
+
+.status-message-card {
+  flex: 0 0 auto;
+  max-width: none;
+  margin: 0 0 16px;
+}
+
+.conversation-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  max-height: none;
+  padding: 18px;
+  overflow: hidden;
+  border-radius: 8px;
+  background:
+      linear-gradient(180deg, rgba(8, 24, 38, 0.92), rgba(15, 23, 42, 0.86)),
+      radial-gradient(circle at 20% 0%, rgba(6, 182, 212, 0.2), transparent 34%);
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  box-shadow:
+      0 24px 80px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+}
+
+.conversation-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+      linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent 80%);
+}
+
+.conversation-panel-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.22);
+}
+
+.conversation-panel-title {
+  margin: 0 0 6px;
+  color: #f8fdff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.conversation-panel-subtitle {
+  margin: 0;
+  color: #9fb9c8;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.conversation-panel-count {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  color: #67e8f9;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid rgba(103, 232, 249, 0.3);
+  border-radius: 999px;
+  background: rgba(8, 145, 178, 0.14);
+}
+
+.conversation-list {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 4px 4px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(103, 232, 249, 0.6) rgba(15, 23, 42, 0.3);
+}
+
+.conversation-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.conversation-list::-webkit-scrollbar-thumb {
+  background: rgba(103, 232, 249, 0.55);
+  border-radius: 999px;
+}
+
+.conversation-list::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.conversation-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.conversation-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #e0f2fe;
+  background: rgba(14, 165, 233, 0.22);
+  border: 1px solid rgba(125, 211, 252, 0.3);
+}
+
+.conversation-item.user .conversation-avatar {
+  color: #dcfce7;
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(134, 239, 172, 0.28);
+}
+
+.conversation-body {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.52);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.conversation-item.assistant .conversation-body {
+  background: rgba(14, 116, 144, 0.18);
+  border-color: rgba(103, 232, 249, 0.2);
+}
+
+.conversation-item.user .conversation-body {
+  background: rgba(22, 101, 52, 0.18);
+  border-color: rgba(134, 239, 172, 0.2);
+}
+
+.conversation-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.conversation-role {
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.conversation-time {
+  color: #718096;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.conversation-text {
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.7;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.conversation-empty {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  color: #9fb9c8;
+  font-size: 14px;
+  line-height: 1.7;
+  border: 1px dashed rgba(125, 211, 252, 0.24);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.35);
 }
 
 .interview-title,
@@ -1843,6 +2510,8 @@ const closeVoiceChat = async () => {
 
 .interview-progress {
   width: 100%;
+  flex: 0 0 auto;
+  margin: 0 0 16px;
   border-radius: 8px;
 }
 
@@ -1859,9 +2528,12 @@ const closeVoiceChat = async () => {
 }
 
 .control-panel {
-  max-width: 760px;
-  margin-bottom: 18px;
-  border-radius: 8px 8px 0 0;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 4px;
+  padding: 18px;
+  box-sizing: border-box;
+  border-radius: 8px;
 }
 
 .mic-button {
@@ -1880,12 +2552,36 @@ const closeVoiceChat = async () => {
   border-color: rgba(103, 232, 249, 0.72);
 }
 
+.control-section {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(140px, 0.8fr) minmax(140px, 0.8fr);
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.control-section .mic-control,
+.control-section > button {
+  min-width: 0;
+}
+
+.control-section > button {
+  min-height: 72px;
+}
+
+.mic-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 72px;
+  box-sizing: border-box;
+}
+
 .end-interview-btn {
   background: linear-gradient(135deg, #be123c, #e11d48);
 }
 
 .interview-assistant {
-  margin-top: 12px;
+  margin-top: 0;
 }
 
 .assistant-tips {
@@ -1946,9 +2642,22 @@ const closeVoiceChat = async () => {
 }
 
 @media screen and (max-width: 768px) {
+  .interview-shell {
+    display: flex;
+    flex-direction: column;
+    width: calc(100vw - 24px);
+    padding: 12px 0;
+    overflow-y: auto;
+  }
+
   .interview-main,
   .control-panel {
     max-width: calc(100vw - 24px);
+  }
+
+  .conversation-panel {
+    width: 100%;
+    max-height: 320px;
   }
 
   .avatar-orb {
