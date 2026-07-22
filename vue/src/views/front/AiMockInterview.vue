@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="ai-interview-agent">
     <!-- 鑳屾櫙瑁呴グ -->
     <div class="interview-background">
@@ -306,6 +306,7 @@ import InterviewSetup from '@/components/InterviewSetup.vue'
 
 // Props and Emits
 const emit = defineEmits(['close', 'conversation-update'])
+const router = useRouter()
 
 // Template refs
 const centerOrbRef = ref(null)
@@ -1050,9 +1051,12 @@ const updateVolume = () => {
 }
 
 const closeVoiceChat = async () => {
-  await cleanupResources();
-  emit('close');
-};
+  await cleanupResources()
+  showSummary.value = false
+  interviewStarted.value = false
+  emit('close')
+  router.push('/front/home')
+}
 
 onBeforeRouteLeave((to, from, next) => {
   if (interviewStarted.value) {
@@ -1077,14 +1081,9 @@ onUnmounted(() => {
 
 <style scoped>
 .ai-interview-agent {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - 50px);
   margin: 0;
   padding: 0;
   display: flex;
@@ -1098,7 +1097,6 @@ onUnmounted(() => {
   #f1f5f9 75%,
   #f8fafc 100%);
   overflow: hidden;
-  z-index: 9999;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -1699,14 +1697,14 @@ onUnmounted(() => {
 
 /* 闈㈣瘯鎬荤粨妯℃€佺獥鍙?*/
 .interview-summary-modal {
-  position: fixed;
+  position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
+  z-index: 10;
   padding: 20px;
 }
 
@@ -1889,9 +1887,8 @@ onUnmounted(() => {
 /* 鍝嶅簲寮忚璁?*/
 @media screen and (max-width: 768px) {
   .ai-interview-agent {
-    height: 100vh;
-    height: -webkit-fill-available;
-    height: 100dvh;
+    min-height: calc(100vh - 50px);
+    min-height: calc(100dvh - 50px);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 
@@ -2009,7 +2006,6 @@ onUnmounted(() => {
 /* iOS浼樺寲 */
 @supports (-webkit-touch-callout: none) {
   .ai-interview-agent {
-    position: fixed;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
   }
