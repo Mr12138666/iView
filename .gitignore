@@ -15,7 +15,17 @@ vue/node_modules/.vite/
 
 # IDE files
 .idea/
+.vscode/
 *.iml
+
+# Local assistant/workspace files
+AGENTS.md
+CLAUDE.md
+mock_data.sql
+
+# Uploaded/runtime files
+files/*PixPin*.jpg
+files/*_x.jpg
 
 # OS noise
 .DS_Store
